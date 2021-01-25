@@ -156,7 +156,7 @@ class FFTSetupData():
                 raise ValueError("Size of the array must be a power of 2.")
             max_size = max(max_size, size)
             
-        self.double = dtype in ("float64", "float128", "complex128","complex256") 
+        self.double = dtype in ("float64","complex128") 
 
         if self.double:
             self.pointer = create_fftsetup(max_size, double = True)
@@ -187,7 +187,7 @@ class FFTSetupData():
 def _get_in_out_dtype(in_dtype, split_in = False, split_out = False, direction = +1, real_transform = False):
     """Determines input and output arrays dtype from the calculation parameters"""
     
-    double = in_dtype in ("float64", "float128", "complex128","complex256")
+    double = in_dtype in ("float64",  "complex128")
     f,c = (np.dtype("float64"), np.dtype("complex128")) if double else (np.dtype("float32"), np.dtype("complex64"))
     
     if real_transform == True:
