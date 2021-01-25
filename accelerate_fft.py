@@ -94,7 +94,8 @@ def _optimal_workers(size, nthreads):
     else:
         return _optimal_workers(size, nthreads-1)
 
-def _optimal_flattened_shape(original_shape,  dim = 1):
+def _optimal_flattened_shape(original_shape, dim = 1):
+    """Finds a shape for a flattened array, so that we can then iterate over it"""
     nthreads = fft_config["nthreads"]
     newshape = reduce((lambda x,y: x*y), original_shape[:-dim] or [1])
     if fft_config["nthreads"] > 1:
@@ -105,9 +106,12 @@ def _optimal_flattened_shape(original_shape,  dim = 1):
     return newshape
 
 def _sequential_call(fftfunc,setup, *args,**kwargs):
+    # a simple sequential runner 
     [fftfunc(setup,*arg,**kwargs) for arg in zip(*args)] 
 
 def _calculate_fft(fftfunc,*args,**kwds):
+    """Runs fft function with given arguments (optionally in parallel 
+    using a ThreadPool)"""
     nthreads = fft_config["nthreads"]
 
     if nthreads > 1:
@@ -152,17 +156,7 @@ class FFTSetupData():
                 raise ValueError("Size of the array must be a power of 2.")
             max_size = max(max_size, size)
             
-        self.double = not dtype in ("float32", "complex64") 
-
-        #determine output array dtype 
-        if dtype == "float32":
-            self.dtype = np.dtype("complex64")
-        elif dtype == "float64":
-            self.dtype = np.dtype("complex128")
-        elif dtype in ("complex64", "complex128"):
-            self.dtype = dtype
-        else:
-            self.dtype = np.dtype(complex)
+        self.double = dtype in ("float64", "float128", "complex128","complex256") 
 
         if self.double:
             self.pointer = create_fftsetup(max_size, double = True)
@@ -189,52 +183,67 @@ class FFTSetupData():
         else:
             self.allocate_memory()
             return self._split_complex_pointer
-                    
-def _init_setup_and_data(a, overwrite_x, split_complex, dim):
-    a = np.asarray(a)
-    try:    
-        setup = FFTSETUP_DATA[(a.shape[-dim:],a.dtype)] 
-    except KeyError:
-        setup = [FFTSetupData(a.shape[-dim:],a.dtype) for i in range(fft_config["nthreads"])]    
-        FFTSETUP_DATA[(a.shape[-dim:],a.dtype)] = setup
+
+def _get_in_out_dtype(in_dtype, split_in = False, split_out = False, direction = +1, real_transform = False):
+    """Determines input and output arrays dtype from the calculation parameters"""
     
-    # convert to a valid dtype
-    # all setups have same dtype, so it is ok to take the first element
-    #print(setup[0].dtype, a.dtype)
-    a = np.asarray(a,setup[0].dtype) 
-    if split_complex:
-        out = empty((2,)+ a.shape, a.real.dtype)       
-    else:
-        if overwrite_x == False:
-            out = empty(a.shape, a.dtype)
+    double = in_dtype in ("float64", "float128", "complex128","complex256")
+    f,c = (np.dtype("float64"), np.dtype("complex128")) if double else (np.dtype("float32"), np.dtype("complex64"))
+    
+    if real_transform == True:
+        if direction == +1:
+            return f , f if split_out else c 
         else:
-            out = a
-    return setup, a, out
-
-def _init_setup_and_data_split(a, dim):
-    real, imag = a
-    real, imag = np.asarray(real), np.asarray(imag)
-    assert real.dtype == imag.dtype
-    assert real.shape == imag.shape
-    try:    
-        setup = FFTSETUP_DATA[(real.shape[-dim:],real.dtype)] 
-    except KeyError:
-        setup = [FFTSetupData(real.shape[-dim:],real.dtype) for i in range(fft_config["nthreads"])]    
-        FFTSETUP_DATA[(real.shape[-dim:],real.dtype)] = setup
+            return f if split_in else c, f
+    else:
+        return f if split_in else c , f if split_out else c
     
-    # convert to a valid dtype
-    # all setups have same double attribute so it is ok to take the first element
-    dtype = "float64" if setup[0].double == True else "float32"
-    real, imag = np.asarray(real, dtype), np.asarray(imag, dtype)
+def _get_out_shape(in_shape, dim = 1, direction = +1, real_transform = False):
+    """Determines output array shape from the calculation parameters"""
+    if real_transform:
+        if direction == +1:
+            return in_shape[:-1] + (in_shape[-1]//2,)
+        else:
+            return in_shape[:-1] + (in_shape[-1] * 2,)
+    else:
+        return in_shape
+     
+def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out = False, direction = +1, real_transform = False):
+    """checks input parameters and creates a valid fft setup and input/output arrays"""
+    # make an array and read dtype, and shape
+    a = (np.asarray(a[0]),np.asarray(a[1])) if split_in else np.asarray(a)
+    dtype = a[0].dtype if split_in else a.dtype
+    shape = a[0].shape if split_in else a.shape
+    
+    # determine the allowed type and shapes of the input and output arrays
+    in_dtype, out_dtype = _get_in_out_dtype(dtype, split_in, split_out, direction, real_transform)
+    out_shape = _get_out_shape(shape, dim, direction, real_transform)
 
-    return setup, real, imag
-
+    # make sure it is right type
+    a = tuple((np.asarray(d,in_dtype) for d in a)) if split_in else np.asarray(a,in_dtype)  
+    #create output array(s)
+    if overwrite_x == True:
+        if split_in == split_out and real_transform == False:
+            out = a
+        else:
+            out = (np.empty(out_shape,out_dtype), np.empty(out_shape,out_dtype)) if split_out else np.empty(out_shape,out_dtype) 
+    else:
+        out = (np.empty(out_shape,out_dtype), np.empty(out_shape,out_dtype)) if split_out else np.empty(out_shape,out_dtype) 
+        
+    try:    
+        setup = FFTSETUP_DATA[(out_shape[-dim:],out_dtype)] 
+    except KeyError:
+        setup = [FFTSetupData(out_shape[-dim:],out_dtype) for i in range(fft_config["nthreads"])]    
+        FFTSETUP_DATA[(out_shape[-dim:],out_dtype)] = setup
+        
+    return setup, a, out
 
 ##################
 # Worker functions
 ##################
 
 def _ffti(setup, a, out, direction = +1):
+    """inplace fft transform"""
 
     n = len(a)    
 
@@ -255,7 +264,7 @@ def _ffti(setup, a, out, direction = +1):
         lib.vDSP_ztoc(_ps,1,_pout,2,n)
  
 def _fftis(setup, a, outr, outi, direction = +1):
-
+    """inplace fft transform with splitted output"""
     n = len(a)    
 
     _a = ffi.from_buffer(a) #make buffer from numpy data
@@ -272,6 +281,7 @@ def _fftis(setup, a, outr, outi, direction = +1):
         lib.vDSP_fft_zip(setup.pointer, _ps, 1, setup.size[0], direction)
                     
 def _sfftis(setup, ar,ai, direction = +1):
+    """inplace fft transform with splitted input and output"""
     _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
     if setup.double:
         lib.vDSP_fft_zipD(setup.pointer, _ps, 1, setup.size[0], direction)     
@@ -279,6 +289,7 @@ def _sfftis(setup, ar,ai, direction = +1):
         lib.vDSP_fft_zip(setup.pointer, _ps, 1, setup.size[0], direction)
 
 def _sfftos(setup, ar,ai, outr, outi, direction = +1):
+    """out-of-place fft transform with splitted input and output"""
     _pins = _create_split_complex_pointer(ar, ai, double = setup.double)
     _pouts = _create_split_complex_pointer(outr, outi, double = setup.double)
     if setup.double:
@@ -287,7 +298,8 @@ def _sfftos(setup, ar,ai, outr, outi, direction = +1):
         lib.vDSP_fft_zop(setup.pointer, _pins, 1, _pouts, 1, setup.size[0], direction)
 
 def _fft2i(setup, a, out, direction = +1):
-    """low level fft worker function. Input and output array must be 2D, contiguous arrays"""
+    """inplace fft2 transform"""
+
     n = a.shape[0] * a.shape[1]
     
     _a = ffi.from_buffer(a) #make buffer from numpy data
@@ -307,7 +319,7 @@ def _fft2i(setup, a, out, direction = +1):
         lib.vDSP_ztoc(_ps,1,_pout,2,n)
 
 def _fft2is(setup, a, outr, outi, direction = +1):
-    """low level fft worker function. Input and output array must be 2D, contiguous arrays"""
+    """inplace fft transform with splitted output"""
     n = a.shape[0] * a.shape[1]
     
     _a = ffi.from_buffer(a) #make buffer from numpy data
@@ -322,64 +334,126 @@ def _fft2is(setup, a, outr, outi, direction = +1):
         lib.vDSP_ctoz(_pa,2,_ps,1,n)
         lib.vDSP_fft2d_zip(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1],direction)
 
-def _fft(a,overwrite_x = False, split_complex = False, direction = +1):
-    setup, a, out = _init_setup_and_data(a, overwrite_x,split_complex,1)
-    shape = _optimal_flattened_shape(a.shape,  dim = 1)
-    _a = a.reshape(shape)
-    if split_complex == False:
-        _out =  out.reshape(shape)
-        _calculate_fft(_ffti, setup, _a,_out, direction = direction)
+def _rfft2i(setup, a, out, direction = +1):
+    """inplace fft2 transform"""
+
+    n = a.shape[0] * a.shape[1] //2
+    
+    _a = ffi.from_buffer(a) #make buffer from numpy data
+    _out = ffi.from_buffer(out) 
+    
+    _pa = ffi.cast(setup.cast_name,_a) #pointer to buffer
+    _pout = ffi.cast(setup.cast_name,_out) #pointer to buffer
+    _ps = setup.split_complex_pointer #pointer to split complex data
+
+    if setup.double:
+        lib.vDSP_ctozD(_pa,2,_ps,1,n)
+        if direction :
+            lib.vDSP_fft2d_zripD(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1]+1,direction)
+        else:
+            lib.vDSP_fft2d_zripD(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1],direction)
+
+        lib.vDSP_ztocD(_ps,1,_pout,2,n)
     else:
-        _out_real, _out_imag =  out[0].reshape(shape), out[1].reshape(shape)
-        _calculate_fft(_fftis, setup, _a,_out_real,_out_imag, direction = direction)
+        lib.vDSP_ctoz(_pa,2,_ps,1,n)
+        if direction:
+            lib.vDSP_fft2d_zrip(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1]+1,direction)
+        else:
+            lib.vDSP_fft2d_zrip(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1],direction)
+
+        lib.vDSP_ztoc(_ps,1,_pout,2,n)
+
+def _rfft2is(setup, a, outr, outi, direction = +1):
+    """inplace fft transform with splitted output"""
+    n = a.shape[0] * a.shape[1]//2
+    
+    _a = ffi.from_buffer(a) #make buffer from numpy data
+    
+    _pa = ffi.cast(setup.cast_name,_a) #pointer to buffer
+    _ps = _create_split_complex_pointer(outr, outi, double = setup.double)
+
+    if setup.double:
+        lib.vDSP_ctozD(_pa,2,_ps,1,n)
+        lib.vDSP_fft2d_zripD(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1]+1,direction)
+    else:
+        lib.vDSP_ctoz(_pa,2,_ps,1,n)
+        lib.vDSP_fft2d_zrip(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1]+1,direction)
+
+
+
+def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out = False, direction = +1, real_transform = False):
+    setup, a, out = _init_setup_and_arrays(a, overwrite_x, dim = dim, split_in = split_in, split_out = split_out, direction = direction, real_transform = real_transform)
+    
+    if split_in == True:
+        a_real, a_imag = a
+        shape = _optimal_flattened_shape(a_real.shape, dim = dim)
+        _a_real, _a_imag = a_real.reshape(shape), a_imag.reshape(shape)
+       
+        if split_out == True:
+            if overwrite_x == False:
+                #out of place transform
+                out_real, out_imag = out
+                shape = _optimal_flattened_shape(out_real.shape,  dim = dim)
+                _out_real, _out_imag =  out_real.reshape(shape), out_imag.reshape(shape)
+                _fftfunc = _sfftos if dim == 1 else None
+                _calculate_fft(_fftfunc, setup, _a_real,_a_imag,_out_real,_out_imag, direction = direction)
+            else:
+                #inplace transform
+                _fftfunc = _sfftis if dim == 1 else None
+                _calculate_fft(_fftfunc, setup, _a_real,_a_imag,direction = direction)
+
+    else:
+        shape = _optimal_flattened_shape(a.shape, dim = dim)
+        _a = a.reshape(shape)
+            
+        if split_out == False:
+            shape = _optimal_flattened_shape(out.shape, dim = dim)
+            _out =  out.reshape(shape)
+            if real_transform:
+                _fftfunc = None if dim == 1 else _rfft2i
+            else:
+                _fftfunc = _ffti if dim == 1 else _fft2i
+            _calculate_fft(_fftfunc, setup, _a,_out, direction = direction)
+            
+        else:
+            shape = _optimal_flattened_shape(out[0].shape,  dim = dim)
+            _out_real, _out_imag =  out[0].reshape(shape), out[1].reshape(shape)
+            if real_transform:
+                _fftfunc = None if dim == 1 else _rfft2is
+            else:
+                _fftfunc = _fftis if dim == 1 else _fft2is
+            
+            
+            _calculate_fft(_fftfunc, setup, _a,_out_real,_out_imag, direction = direction)
+    
     return out
     
-
-def _sfft(a,overwrite_x = False, direction = +1):
-    setup, real, imag = _init_setup_and_data_split(a, dim = 1)
-    shape = _optimal_flattened_shape(real.shape,  dim = 1)
-    _real,_imag = real.reshape(shape), imag.reshape(shape)
-    if overwrite_x == True:
-        _calculate_fft(_sfftis, setup, _real, _imag, direction = direction)
-        return real, imag
-    else:
-        out_real, out_imag = empty(real.shape, real.dtype), empty(imag.shape, imag.dtype)
-        _out_real,_out_imag = out_real.reshape(shape), out_imag.reshape(shape)
-        _calculate_fft(_sfftos, setup, _real, _imag, _out_real, _out_imag, direction = direction)
-        return out_real, out_imag
-
-def _fft2(a,overwrite_x = False, split_complex = False, direction = +1):
-    setup, a, out = _init_setup_and_data(a, overwrite_x,split_complex,2)
-    shape = _optimal_flattened_shape(a.shape,  dim = 2)
-    _a = a.reshape(shape)
-    if split_complex == False:
-        _out =  out.reshape(shape)
-        _calculate_fft(_fft2i, setup, _a,_out, direction = direction)
-    else:
-        _out_real, _out_imag =  out[0].reshape(shape), out[1].reshape(shape)
-        _calculate_fft(_fft2is, setup, _a,_out_real,_out_imag, direction = direction)
-    return out
 
 def fft(a, overwrite_x = False, split_complex = False):
     """Returns dicrete Fourer transform."""
-    return _fft(a,overwrite_x = overwrite_x, split_complex = split_complex, direction = +1)
+    return generalized_fft(a,overwrite_x = overwrite_x, split_out = split_complex, direction = +1)
 
 def ifft(a, overwrite_x = False, split_complex = False):
     """Returns dicrete Fourer transform."""
-    return _fft(a,overwrite_x = overwrite_x, split_complex = split_complex, direction = +1)
+    return generalized_fft(a,overwrite_x = overwrite_x, split_out = split_complex, direction = +1)
     
 def sfft(a, overwrite_x = False):
-    return _sfft(a,overwrite_x,+1)
+    return generalized_fft(a,overwrite_x = overwrite_x, split_in = True, split_out = True, direction = +1)
 
 def isfft(a, overwrite_x = False):
-    return _sfft(a,overwrite_x,-1)
+    return generalized_fft(a,overwrite_x = overwrite_x, split_in = True, split_out = True, direction = -1)
         
 def fft2(a, overwrite_x = False, split_complex = False):
     """Returns dicrete 2D Fourer transform."""
-    return _fft2(a,overwrite_x = overwrite_x, split_complex = split_complex, direction = +1)
+    return generalized_fft(a,overwrite_x = overwrite_x, split_out = split_complex, direction = +1, dim = 2)
 
 def ifft2(a, overwrite_x = False, split_complex = False):
     """Returns dicrete 2D Fourer transform."""
-    return _fft2(a,overwrite_x = overwrite_x, split_complex = split_complex, direction = -1)
-   
+    return generalized_fft(a,overwrite_x = overwrite_x, split_out = split_complex, direction = -1, dim = 2)
+  
+def rfft2(a, split_complex = False):
+    return generalized_fft(a, split_out = split_complex, direction = +1, dim = 2, real_transform = True)
+
+#def irfft2(a, split_complex = False):
+#    return generalized_fft(a, split_out = split_complex, direction = -1, dim = 2, real_transform = True)
     

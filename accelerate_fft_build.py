@@ -190,6 +190,9 @@ extern void vDSP_fft_zopD(
     vDSP_Length                  __Log2N,
     FFTDirection                 __Direction);
          
+void vDSP_fft2d_zripD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __flag);
+void vDSP_fft2d_zrip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
+
                 """)
 
 ffibuilder.set_source("_accelerate_fft_cffi",
