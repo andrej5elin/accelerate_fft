@@ -167,6 +167,12 @@ void vDSP_ztocD(const DSPDoubleSplitComplex *__Z, vDSP_Stride __IZ, DSPDoubleCom
     these.
 */
 
+void vDSP_fft_zipt(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC, const DSPSplitComplex *__Buffer, vDSP_Length __Log2N, FFTDirection __Direction);
+void vDSP_fft_ziptD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, const DSPDoubleSplitComplex *__Buffer, vDSP_Length __Log2N, FFTDirection __Direction);
+
+void vDSP_fft_zrip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC, vDSP_Length __Log2N, FFTDirection __Direction);
+void vDSP_fft_zripD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, vDSP_Length __Log2N, FFTDirection __Direction);
+
 void vDSP_fft_zip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC, vDSP_Length __Log2N, FFTDirection __Direction);
 void vDSP_fft_zipD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, vDSP_Length __Log2N, FFTDirection __Direction);
 void vDSP_fft2d_zip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
@@ -198,7 +204,9 @@ void vDSP_fft2d_zrip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride _
 ffibuilder.set_source("_accelerate_fft_cffi",
 """
      #include <Accelerate/Accelerate.h>   // the C header of the library
-"""#,
+"""
+,extra_compile_args=["-O3"]
+#,
     # libraries=['accelerate']
      )   # library name, for the linker
 
