@@ -1,6 +1,7 @@
 import unittest
 import accelerate_fft as fft
 import numpy as np
+
 np.random.seed(0)
 
 f64 =  np.array([[1,2,3,4],[4,5,6,7],[1,2,3,1],[3,4,1,2]], "float64")
@@ -8,11 +9,13 @@ f32 =  np.array([[1,2,3,4],[4,5,6,7],[1,2,3,1],[3,4,1,2]], "float32")
 c64 =  np.array([[1,2,3,4],[4,5,6,7],[1,2,3,1],[3,4,1,2]], "complex64")
 c128 = np.array([[1,2,3,4],[4,5,6,7],[1,2,3,1],[3,4,1,2]], "complex128")
 
-class BaseArrayTest(unittest.TestCase):
+class BaseTest(unittest.TestCase):
+    def setUp(self):
+        fft.set_nthreads(1)
     def assert_equal(self,a,b, rtol = 1.e-5,atol=1.e-8):
         self.assertTrue(np.allclose(a,b,rtol,atol))
     
-class TestShape(unittest.TestCase):
+class TestShape(BaseTest):
     
     def test_wrong_fft_shape(self):
         with self.assertRaises(ValueError):
@@ -22,8 +25,7 @@ class TestShape(unittest.TestCase):
         with self.assertRaises(ValueError):
             fft.fft2([[1,2,3],[1,2,3]])
             
-class TestDtype(unittest.TestCase):
-    pass
+class TestDtype(BaseTest):
     
     def test_rfft_128(self):
         with self.assertWarns(np.ComplexWarning):
@@ -33,7 +35,7 @@ class TestDtype(unittest.TestCase):
         with self.assertWarns(np.ComplexWarning):
             fft.rfft(c64)
 
-class TestResults(BaseArrayTest):
+class TestResults(BaseTest):
     
     def test_rfft_float(self):
         a = np.array(np.random.randn(2,4,8),"float32")
@@ -116,7 +118,7 @@ class TestResults(BaseArrayTest):
         b = a.reshape(2,8,4)
         self.assert_equal(fft.ifft2(a)/(8*4), np.fft.ifft2(a))
         self.assert_equal(fft.ifft2(b)/(8*4), np.fft.ifft2(b))
-        
+
     def test_ifft2_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
         b = a.reshape(2,8,4)
@@ -124,10 +126,33 @@ class TestResults(BaseArrayTest):
         self.assert_equal(fft.ifft2(b)/(8*4), np.fft.ifft2(b))
         
     def test_irfft_float(self):
+        a = np.array(np.random.randn(2,4,8),"float32")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.irfft(fft.rfft(a))/8/2, a,  rtol = 1.e-4,atol=1.e-7)
+        self.assert_equal(fft.irfft(fft.rfft(b))/4/2, b,  rtol = 1.e-4,atol=1.e-7)
+        
+    def test_irfft_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
         b = a.reshape(2,8,4)
         self.assert_equal(fft.irfft(fft.rfft(a))/8/2, a)
         self.assert_equal(fft.irfft(fft.rfft(b))/4/2, b)
+        
+    def test_irfft2_float(self):
+        a = np.array(np.random.randn(2,4,8),"float32")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.irfft2(fft.rfft2(a))/8/4/2, a,  rtol = 1.e-4,atol=1.e-7)
+        self.assert_equal(fft.irfft2(fft.rfft2(b))/4/8/2, b,  rtol = 1.e-4,atol=1.e-7)
 
+    def test_irfft2_double(self):
+        a = np.array(np.random.randn(2,4,8),"float64")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.irfft2(fft.rfft2(a))/8/4/2, a)
+        self.assert_equal(fft.irfft2(fft.rfft2(b))/4/8/2, b)
+ 
+class TestResultsThreaded( TestResults):
+    
+    def setUp(self):
+        fft.set_nthreads(2)
+                       
 if __name__ == '__main__':
     unittest.main()
