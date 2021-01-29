@@ -16,7 +16,7 @@ must have a size that is a multiple of nthread  * nfft, where
 nthread is number of threads used, and nfft is the size of the fft. 
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np

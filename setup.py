@@ -18,14 +18,14 @@ Implements fft using apple's accelerate framework (vDSP)
 #packages = find_packages()
 
 setup(name = 'accelerate_fft',
-      version = "0.1.0",
+      version = "0.1.1",
       description = "FFT for MAC using vDSP",
       long_description=long_description,
       long_description_content_type="text/markdown",
       author = 'Andrej Petelin',
       author_email = 'andrej.petelin@gmail.com',
       url="https://github.com/andrej5elin/accelerate_fft",
-      py_modules = ["accelerate_fft"],
+      py_modules = ["accelerate_fft", "accelerate_fft_build","accelerate_fft_test"],
       #packages = packages,
       #include_package_data=True
       #package_data={
