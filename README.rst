@@ -1,7 +1,7 @@
 accelerate_fft
 ==============
 
-Wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of ffts.
+CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of ffts.
 
 Note that vDSP FFT only works for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... Input data has to be contiguous. Transformation is performed over the last axis (1d fft) and last two axes (2d fft).
 
@@ -9,16 +9,14 @@ This module has a very primitive multi-threading support. Useful for large-size 
 
 Why?
 ----
-For intel-based macs just use `mkl_fft <https://github.com/IntelPython/mkl_fft>`_, which is one of the fastest FFT libraries out there.
-The accelerate_fft was developed for M-powered macs, where the accelerate framework is expected to be faster than MKL running over Rosetta.
+For intel-based macs use `mkl_fft <https://github.com/IntelPython/mkl_fft>`_, which is one of the fastest FFT libraries out there.
+However, the Accelerate implementation could be faster than MKL on Apple Silicon macs. 
 
 Requisites
 ----------
 
 * cffi
-* numpy
-
-Although the package should build fine under Rosetta, you really should have an osx-arm64 (conda-forge) python distribution if you use this on Apple Silicon chips.  
+* numpy  
 
 Installation
 ------------
