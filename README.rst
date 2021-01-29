@@ -40,9 +40,9 @@ Use it like numpy fft::
     >>> np.allclose(fft.fft(a), np.fft.fft(a))
     True
     
-Note that real transform in accelerate has a wierd format, and is not 
+Note that real transforms in accelerate have a wierd format, and the outputs are not 
 the same as numpy's rfft and rfft2. Use :func:`unpack` or :func:`unpack2` to 
-convert to numpy-like format. Note also the scaling factor 2::
+convert to numpy-like format. Note also the scaling factor of 2::
 
     >>> np.allclose(fft.unpack(fft.rfft(a))/2, np.fft.rfft(a))
     True
