@@ -37,11 +37,11 @@ Use it like numpy fft::
     
 Note that real transform in accelerate has a wierd format, and is not 
 the same as numpy's rfft and rfft2. Use :func:`unpack` or :func:`unpack2` to 
-convert to numpy-like format::
+convert to numpy-like format. Note also the scaling factor 2::
 
-    >>> np.allclose(fft.unpack(fft.rfft(a)), np.fft.rfft(a))
+    >>> np.allclose(fft.unpack(fft.rfft(a))/2, np.fft.rfft(a))
     True
-    >>> np.allclose(fft.unpack2(fft.rfft2(a)), np.fft.rfft2(a))
+    >>> np.allclose(fft.unpack2(fft.rfft2(a))/2, np.fft.rfft2(a))
     True
     
 The inverse transforms are also different from numpy's. You should scale the results to get the proper inverse like::
