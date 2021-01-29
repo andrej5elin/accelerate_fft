@@ -37,6 +37,6 @@ setup(name = 'accelerate_fft',
       classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS X",
+        "Operating System :: MacOS :: MacOS X",
     ]
       )
