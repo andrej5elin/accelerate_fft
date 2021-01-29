@@ -3,7 +3,8 @@ Wrapper of apple's accelerate (vDSP) FFT routines. It implements multiple-signal
 version of ffts. 
 
 Note that vDSP FFT only works for input data of length that is a power of 2,
-e.g. ... 256, 512, 1024 ... 
+e.g. ... 256, 512, 1024 ... Input data has to be contiguous. Transformation
+is performed over the last axis (1d fft) and last two axes (2d fft).
 
 Also note that real transform in accelerate has a wierd format, and is not 
 the same as numpy's rfft and rfft2. Use :func:`unpack` or :func:`unpack2` to 
@@ -15,7 +16,7 @@ must have a size that is a multiple of nthread  * nfft, where
 nthread is number of threads used, and nfft is the size of the fft. 
 """
 
-__version__ = "0.2.0"
+__version__ = "0.1.0"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
@@ -27,7 +28,6 @@ from functools import reduce
 empty = np.empty
 fft_config = {"nthreads" : 1} 
 
-
 #--------------------------
 # Higl-level user functions
 #--------------------------
@@ -36,7 +36,8 @@ def set_nthreads(nthreads):
     """Sets number of threads used in calculations. Setting  nthreads > 1
     will trigger a ThreadPool and use multiple threads when computing.
     
-    Note that this only works for multi-dimensional data.
+    Note that this only works for multi-dimensional data (with three or more dimensions).
+    Useful for multi-signal 2d ffts.
     """
     current_value = fft_config["nthreads"]
     fft_config["nthreads"] = max(1,int(nthreads))
@@ -45,33 +46,197 @@ def set_nthreads(nthreads):
     return current_value
 
 def fft(a, overwrite_x = False, split_in = False, split_out = False):
-    """Returns dicrete Fourer transform."""
+    """Returns a dicrete Fourier transform.
+    
+    Parameters
+    ----------
+    a : ndarray or (ndarray,ndarray)
+        Input complex array (if split_in = False) or a tuple of float arrays
+        (if split_in = True). 
+    overwrite_x  : bool
+        Specifies whether input data can be overwritten. Whether data is actually
+        overwritten depends on the `split_in` and `split_out` arguments.
+    split_in : bool
+        If set, input data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+    split_out : bool
+        If set, output data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+        
+    Returns
+    -------
+    out : ndarray or (ndarray, ndarray)
+        Output complex array (if split_out = False) or a tuple of float arrays
+        (if split_out = True). 
+    """
     return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = +1)
 
 def ifft(a, overwrite_x = False, split_in = False, split_out = False):
-    """Returns dicrete Fourer transform."""
+    """Returns an inverse of the dicrete Fourier transform.
+    
+    Note that a == ifft(fft(a))/a.shape[-1]
+    
+    Parameters
+    ----------
+    a : ndarray or (ndarray,ndarray)
+        Input complex array (if split_in = False) or a tuple of float arrays
+        (if split_in = True). 
+    overwrite_x  : bool
+        Specifies whether input data can be overwritten. Whether data is actually
+        overwritten depends on the `split_in` and `split_out` arguments.
+    split_in : bool
+        If set, input data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+    split_out : bool
+        If set, output data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+        
+    Returns
+    -------
+    out : ndarray or (ndarray, ndarray)
+        Output complex array (if split_out = False) or a tuple of float arrays
+        (if split_out = True). 
+    """
     return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = -1)
     
 def fft2(a, overwrite_x = False, split_in = False, split_out = False):
-    """Returns dicrete 2D Fourer transform."""
+    """Returns a dicrete 2D Fourier transform.
+        
+    Parameters
+    ----------
+    a : ndarray or (ndarray,ndarray)
+        Input complex array (if split_in = False) or a tuple of float arrays
+        (if split_in = True). 
+    overwrite_x  : bool
+        Specifies whether input data can be overwritten. Whether data is actually
+        overwritten depends on the `split_in` and `split_out` arguments.
+    split_in : bool
+        If set, input data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+    split_out : bool
+        If set, output data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+        
+    Returns
+    -------
+    out : ndarray or (ndarray, ndarray)
+        Output complex array (if split_out = False) or a tuple of float arrays
+        (if split_out = True). 
+    """
     return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = +1, dim = 2)
 
 def ifft2(a, overwrite_x = False, split_in = False, split_out = False):
-    """Returns dicrete 2D Fourer transform."""
+    """Returns an inverse of the dicrete 2D Fourier transform.
+    
+    Note that a == ifft2(fft2(a))/a.shape[-1]/a.shape[-2]
+    
+    Parameters
+    ----------
+    a : ndarray or (ndarray,ndarray)
+        Input complex array (if split_in = False) or a tuple of float arrays
+        (if split_in = True). 
+    overwrite_x  : bool
+        Specifies whether input data can be overwritten. Whether data is actually
+        overwritten depends on the `split_in` and `split_out` arguments.
+    split_in : bool
+        If set, input data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+    split_out : bool
+        If set, output data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+        
+    Returns
+    -------
+    out : ndarray or (ndarray, ndarray)
+        Output complex array (if split_out = False) or a tuple of float arrays
+        (if split_out = True). 
+    """
     return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = -1, dim = 2)
   
 def rfft(a, split_out = False):
-    """Computes real transform """
+    """Returns a dicrete Fourier transform for real input data.
+    
+    Note that you should call :func:`unpack`on the computed result to obtain
+    a numpy-like representation of the computed data.
+     
+    Parameters
+    ----------
+    a : ndarray
+        Input real array. 
+    split_out : bool
+        If set, output data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+        
+    Returns
+    -------
+    out : ndarray or (ndarray, ndarray)
+        Output complex array (if split_out = False) or a tuple of float arrays
+        (if split_out = True). 
+    """
     return generalized_fft(a, split_out = split_out, direction = +1, dim = 1, real_transform = True)
 
 def irfft(a, split_in =  False):
+    """Returns an inverse of the dicrete Fourier transform for real input data.
+    
+    Note that a == irfft(rfft(a))/a.shape[-1]/2 
+    
+    Parameters
+    ----------
+    a : ndarray or (ndarray,ndarray)
+        Input complex array (if split_in = False) or a tuple of float arrays
+        (if split_in = True). 
+    split_in : bool
+        If set, input data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+
+    Returns
+    -------
+    out : ndarray 
+        Output float array.
+    """
     return generalized_fft(a, split_in = split_in, direction = -1, dim = 1, real_transform = True)
 
 def rfft2(a, split_out = False):
-    """Computes real transform """
+    """Returns a dicrete Fourier transform for 2D real input data.
+    
+    Note that you should call :func:`unpack2`on the computed result to obtain
+    a numpy-like representation of the computed data.
+     
+    Parameters
+    ----------
+    a : ndarray
+        Input real array. 
+    split_out : bool
+        If set, output data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+        
+    Returns
+    -------
+    out : ndarray or (ndarray, ndarray)
+        Output complex array (if split_out = False) or a tuple of float arrays
+        (if split_out = True). 
+    """
     return generalized_fft(a, split_out = split_out, direction = +1, dim = 2, real_transform = True)
 
 def irfft2(a, split_in = False):
+    """Returns an inverse of the dicrete Fourier transform for real 2D input data.
+    
+    Note that a == irfft2(rfft2(a))/a.shape[-1]/a.shape[-2]/2 
+    
+    Parameters
+    ----------
+    a : ndarray or (ndarray,ndarray)
+        Input complex array (if split_in = False) or a tuple of float arrays
+        (if split_in = True). 
+    split_in : bool
+        If set, input data is treated as split-complex data. A tuple of two
+        real arrays describing the real and imginary parts of the data.
+
+    Returns
+    -------
+    out : ndarray 
+        Output float array.
+    """
     return generalized_fft(a, split_in = split_in, direction = -1, dim = 2, real_transform = True)
 
 def unpack(a, inplace = False):
@@ -131,7 +296,18 @@ def unpack2(a, inplace = False):
     return out
 
 def create_fftsetup(logn, double = True):
-    """Creates and returns a fftsetup of a given logsize and precision."""
+    """Creates and returns a fftsetup of a given logsize and precision.
+    Setup is allocated only if needed. This function must be called whenever
+    a setup is required.
+    
+    Parameters
+    ----------
+    logn : int
+        A np.log2 of the size of the arrays that you will be using. E.g. for
+        an array of size 1024 use logn = 10.
+    double : bool
+        Indicates whether we are working with double precision (default) or not.
+    """
     if double == True:
         if fftsetupD.logsize < logn:
             fftsetupD.create(logn)
@@ -410,7 +586,6 @@ def _get_vDSP_fft_outplace(double = False, dim = 1):
         _func = lib.vDSP_fftm_zop  if dim == 1 else lib.vDSP_fft2d_zop 
     return _func
         
-
 def _fft(setup, a, out, n = 1, dim = 1, direction = +1, real_transform = False):
     """1D or 2D fft transform, real or complex"""
 
@@ -452,7 +627,26 @@ def _ffts(setup, a, outr, outi, n = 1, dim = 1, direction = +1, real_transform =
         _func(setup.pointer, _ps, 1, setup.count//n, setup.size[0], n, direction)
     else:
         _func(setup.pointer, _ps, 1,0, setup.size[0], setup.size[1],direction)
-       
+
+def _sfft(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = False):
+    """1D or 2D fft transform, real or complex for split-complex input data"""
+
+    #initialize
+    _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
+    _out = ffi.from_buffer(out) 
+    _pout = ffi.cast(setup.cast_name,_out) 
+    
+    #define functions
+    _ztoc = lib.vDSP_ztocD if setup.double else lib.vDSP_ztoc
+    _func = _get_vDSP_fft_inplace(double = setup.double, dim = dim, real_transform = real_transform)
+   
+    #perform calculations  
+    if dim == 1:
+        _func(setup.pointer, _ps, 1, setup.count//n, setup.size[0], n , direction)
+    else:
+        _func(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1], direction)
+    _ztoc(_ps,1,_pout,2, setup.count)        
+
 def _sfftis(setup, ar,ai, n = 1, dim = 1, direction = +1):
     """Same as _ffts (complex transform only), but with input data as split complex data. Inplace transform"""
     _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
@@ -471,7 +665,6 @@ def _sfftos(setup, ar,ai, outr, outi, n = 1, dim = 1, direction = +1):
         _func(setup.pointer, _pins, 1, setup.count//n,_pouts, 1, setup.count//n, setup.size[0], n, direction)
     else:
         _func(setup.pointer, _pins, 1,0, _pouts, 1,0,setup.size[0], setup.size[1],direction)
-
 
 def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out = False, direction = +1, real_transform = False):
     setup, a, out = _init_setup_and_arrays(a, overwrite_x, dim = dim, split_in = split_in, split_out = split_out, direction = direction, real_transform = real_transform)
@@ -495,6 +688,11 @@ def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out 
             else:
                 #inplace transform
                 _calculate_fft(_sfftis, setup, _a_real,_a_imag, n = n, dim = dim, direction = direction)
+        else:
+            shape = _optimal_flattened_shape(out.shape,  dim = dim)
+            _out = out.reshape(shape)
+            _calculate_fft(_sfft, setup, _a_real,_a_imag,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
+
     else:
         shape = _optimal_flattened_shape(a.shape, dim = dim)
         n = shape[-2]
