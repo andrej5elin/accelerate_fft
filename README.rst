@@ -63,7 +63,7 @@ For multi-dimensional data (ndim >= 3), you can use threading to speed up comput
     1
     >>> out = fft.fft2(a)
     
-Note that because of the python thread-creation overhead, this may be slower than::
+Note that for small arrays, because of the python thread-creation overhead, this may be slower than::
 
     >>> fft.set_nthreads(1)
     4
