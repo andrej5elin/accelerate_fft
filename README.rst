@@ -76,6 +76,6 @@ Note that for small arrays, because of the python thread-creation overhead, this
 License
 -------
 
-``dtmm`` is released under MIT license so you can use it freely.
+``accelerate_fft`` is released under MIT license so you can use it freely.
 
 
