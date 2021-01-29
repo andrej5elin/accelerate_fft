@@ -52,7 +52,7 @@ typedef struct OpaqueFFTSetup           *FFTSetup;
 typedef struct OpaqueFFTSetupD          *FFTSetupD;
 
 
-FFTSetup vDSP_create_fftsetup(
+extern FFTSetup vDSP_create_fftsetup(
     vDSP_Length __Log2n,
     FFTRadix    __Radix)
 		;
@@ -130,9 +130,9 @@ ffibuilder.set_source("_accelerate_fft_cffi",
 """
      #include <Accelerate/Accelerate.h>   // the C header of the library
 """
-#,extra_compile_args=["-O3"]
+#,extra_link_args=["-framework Accelerate"]
 #,
-    # libraries=['accelerate']
+    #,libraries=['framework Accelerate']
      )   # library name, for the linker
 
 if __name__ == "__main__":
