@@ -35,7 +35,7 @@ Use it like numpy fft::
     >>> np.allclose(fft.fft(a), np.fft.fft(a))
     True
     
-Also note that real transform in accelerate has a wierd format, and is not 
+Note that real transform in accelerate has a wierd format, and is not 
 the same as numpy's rfft and rfft2. Use :func:`unpack` or :func:`unpack2` to 
 convert to numpy-like format::
 
@@ -44,7 +44,7 @@ convert to numpy-like format::
     >>> np.allclose(fft.unpack2(fft.rfft2(a)), np.fft.rfft2(a))
     True
     
-The inverse transforms are also different from numpy's. You should scale resulst to get the proper inverse like::
+The inverse transforms are also different from numpy's. You should scale the results to get the proper inverse like::
 
     >>> np.allclose(fft.ifft(fft.fft(a))/8, a)
     True
@@ -71,6 +71,6 @@ Note that because of the python thread-creation overhead, this may be slower tha
 License
 -------
 
-``dtmm`` is released under MIT license so you can use it freely. Please cite the package if you use it. See the provided DOI badge.
+``dtmm`` is released under MIT license so you can use it freely.
 
 
