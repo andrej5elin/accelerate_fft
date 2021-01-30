@@ -84,7 +84,7 @@ Because vDSP's FFT work in split-complex data format. You may prepare and retrie
     >>> real, imag = fft.fft2(a, split_out = True)
     >>> real, imag = fft.ifft2((real, imag), split_in = True, split_out = True, overwrite_x = True)
     
-Here, the `overwrite_x`argument defines that the transform is done inplace and it overwrites the input data.
+Here, the `overwrite_x` argument defines that the transform is done inplace and it overwrites the input data.
 
 License
 -------
