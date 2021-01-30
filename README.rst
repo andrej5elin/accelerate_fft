@@ -20,7 +20,7 @@ This module has a very primitive multi-threading support. Useful for large-size 
 
 Why?
 ----
-For intel-based macs use `mkl_fft <https://github.com/IntelPython/mkl_fft>`_, which is one of the fastest FFT libraries out there.
+For Intel-based macs use `mkl_fft <https://github.com/IntelPython/mkl_fft>`_, which is one of the fastest FFT libraries out there.
 However, the Accelerate implementation can be faster than MKL on Apple Silicon macs. 
 
 Requisites
