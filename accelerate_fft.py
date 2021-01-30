@@ -32,6 +32,11 @@ fft_config = {"nthreads" : 1}
 # Higl-level user functions
 #--------------------------
 
+def test():
+    """Runs unittests"""
+    from unittest import main
+    main(module='accelerate_fft_test', exit=False)
+
 def set_nthreads(nthreads):
     """Sets number of threads used in calculations. Setting  nthreads > 1
     will trigger a ThreadPool and use multiple threads when computing.
@@ -579,11 +584,17 @@ def _get_vDSP_fft_inplace(double = False, dim = 1, real_transform = False):
             _func = lib.vDSP_fft2d_zrip if real_transform else lib.vDSP_fft2d_zip  
     return _func
 
-def _get_vDSP_fft_outplace(double = False, dim = 1):
+def _get_vDSP_fft_outplace(double = False, dim = 1,real_transform = False):
     if double:
-        _func = lib.vDSP_fftm_zopD if dim == 1 else lib.vDSP_fft2d_zopD  
+        if real_transform == False:
+            _func = lib.vDSP_fftm_zopD if dim == 1 else lib.vDSP_fft2d_zopD  
+        else:
+            _func = lib.vDSP_fftm_zropD if dim == 1 else lib.vDSP_fft2d_zropD 
     else:
-        _func = lib.vDSP_fftm_zop  if dim == 1 else lib.vDSP_fft2d_zop 
+        if real_transform == False:
+            _func = lib.vDSP_fftm_zop  if dim == 1 else lib.vDSP_fft2d_zop 
+        else:
+            _func = lib.vDSP_fftm_zrop  if dim == 1 else lib.vDSP_fft2d_zrop 
     return _func
         
 def _fft(setup, a, out, n = 1, dim = 1, direction = +1, real_transform = False):
@@ -628,8 +639,8 @@ def _ffts(setup, a, outr, outi, n = 1, dim = 1, direction = +1, real_transform =
     else:
         _func(setup.pointer, _ps, 1,0, setup.size[0], setup.size[1],direction)
 
-def _sfft(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = False):
-    """1D or 2D fft transform, real or complex for split-complex input data"""
+def _sffti(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = False):
+    """1D or 2D fft transform, real or complex for split-complex input data - inplace"""
 
     #initialize
     _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
@@ -647,6 +658,21 @@ def _sfft(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = F
         _func(setup.pointer, _ps, 1, 0, setup.size[0], setup.size[1], direction)
     _ztoc(_ps,1,_pout,2, setup.count)        
 
+def _sffto(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = False):
+    """1D or 2D fft transform, real or complex for split-complex input data - out of place"""
+    _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
+    _out = ffi.from_buffer(out) 
+    _pout = ffi.cast(setup.cast_name,_out)   
+    _pouts  = setup.split_complex_pointer 
+    _func = _get_vDSP_fft_outplace(double = setup.double, dim = dim, real_transform = real_transform)
+    if dim == 1:
+        _func(setup.pointer, _ps, 1, setup.count//n,_pouts, 1, setup.count//n, setup.size[0], n, direction)
+    else:
+        _func(setup.pointer, _ps, 1,0, _pouts, 1,0,setup.size[0], setup.size[1],direction)
+
+    _ztoc = lib.vDSP_ztocD if setup.double else lib.vDSP_ztoc
+    _ztoc(_pouts,1,_pout,2, setup.count)     
+
 def _sfftis(setup, ar,ai, n = 1, dim = 1, direction = +1):
     """Same as _ffts (complex transform only), but with input data as split complex data. Inplace transform"""
     _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
@@ -661,7 +687,7 @@ def _sfftos(setup, ar,ai, outr, outi, n = 1, dim = 1, direction = +1):
     _pins = _create_split_complex_pointer(ar, ai, double = setup.double)
     _pouts = _create_split_complex_pointer(outr, outi, double = setup.double)
     _func = _get_vDSP_fft_outplace(double = setup.double, dim = dim)
-    if dim == 0:
+    if dim == 1:
         _func(setup.pointer, _pins, 1, setup.count//n,_pouts, 1, setup.count//n, setup.size[0], n, direction)
     else:
         _func(setup.pointer, _pins, 1,0, _pouts, 1,0,setup.size[0], setup.size[1],direction)
@@ -691,7 +717,10 @@ def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out 
         else:
             shape = _optimal_flattened_shape(out.shape,  dim = dim)
             _out = out.reshape(shape)
-            _calculate_fft(_sfft, setup, _a_real,_a_imag,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
+            if overwrite_x == True:
+                _calculate_fft(_sffti, setup, _a_real,_a_imag,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
+            else:
+                _calculate_fft(_sffto, setup, _a_real,_a_imag,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
 
     else:
         shape = _optimal_flattened_shape(a.shape, dim = dim)

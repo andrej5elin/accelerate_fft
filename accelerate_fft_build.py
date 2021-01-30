@@ -115,7 +115,10 @@ extern void vDSP_fft_zopD(
          
 void vDSP_fft2d_zripD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __flag);
 void vDSP_fft2d_zrip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
-
+void vDSP_fft2d_zop(FFTSetup __Setup, const DSPSplitComplex *__A, vDSP_Stride __IA0, vDSP_Stride __IA1, const DSPSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
+void vDSP_fft2d_zopD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__A, vDSP_Stride __IA0, vDSP_Stride __IA1, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
+void vDSP_fft2d_zrop(FFTSetup __Setup, const DSPSplitComplex *__A, vDSP_Stride __IA0, vDSP_Stride __IA1, const DSPSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
+void vDSP_fft2d_zropD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__A, vDSP_Stride __IA0, vDSP_Stride __IA1, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC0, vDSP_Stride __IC1, vDSP_Length __Log2N0, vDSP_Length __Log2N1, FFTDirection __Direction);
 
 void vDSP_fftm_zip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IM, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
 void vDSP_fftm_zipD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IM, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
@@ -123,7 +126,8 @@ void vDSP_fftm_zop(FFTSetup __Setup, const DSPSplitComplex *__A, vDSP_Stride __I
 void vDSP_fftm_zopD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__A, vDSP_Stride __IA, vDSP_Stride __IMA, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IMC, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
 void vDSP_fftm_zrip(FFTSetup __Setup, const DSPSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IM, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
 void vDSP_fftm_zripD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IM, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
-
+void vDSP_fftm_zrop(FFTSetup __Setup, const DSPSplitComplex *__A, vDSP_Stride __IA, vDSP_Stride __IMA, const DSPSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IMC, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
+void vDSP_fftm_zropD(FFTSetupD __Setup, const DSPDoubleSplitComplex *__A, vDSP_Stride __IA, vDSP_Stride __IMA, const DSPDoubleSplitComplex *__C, vDSP_Stride __IC, vDSP_Stride __IMC, vDSP_Length __Log2N, vDSP_Length __M, FFTDirection __Direction);
                 """)
 
 ffibuilder.set_source("_accelerate_fft_cffi",
