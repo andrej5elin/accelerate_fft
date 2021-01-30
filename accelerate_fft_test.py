@@ -322,7 +322,18 @@ class TestSplitDataTransformThreaded(TestSplitDataTransform):
 class TestInplaceTransformThreaded(TestInplaceTransforms):
     
     def setUp(self):
-        fft.set_nthreads(2)      
+        fft.set_nthreads(2)    
+        
+class TestSetup(BaseTest):
+    def test_fftsetup(self):
+        fft.destroy_fftsetup()
+        s1 = fft.create_fftsetup(5)
+        s2 = fft.create_fftsetup(4) #must return previous setup
+        self.assertTrue(s1 is s2)
+        s3 = fft.create_fftsetup(7) #must be new setup
+        self.assertTrue(s3 is not s2)
+        fft.destroy_fftsetup()
+        
                  
 if __name__ == '__main__':
     unittest.main()

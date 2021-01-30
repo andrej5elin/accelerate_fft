@@ -21,12 +21,15 @@ __version__ = "0.1.2"
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
 from multiprocessing.pool import ThreadPool as Pool
+import threading
 #from multiprocessing import Pool
 from functools import reduce
 #import pyfftw
 #empty = pyfftw.empty_aligned
 empty = np.empty
 fft_config = {"nthreads" : 1} 
+
+lock = threading.Lock()
 
 #--------------------------
 # Higl-level user functions
@@ -313,20 +316,23 @@ def create_fftsetup(logn, double = True):
     double : bool
         Indicates whether we are working with double precision (default) or not.
     """
-    if double == True:
-        if fftsetupD.logsize < logn:
-            fftsetupD.create(logn)
-        return fftsetupD.pointer
-    else:
-        if fftsetup.logsize < logn:
-            fftsetup.create(logn)
-        return fftsetup.pointer  
+    #this function must be thread-safe, so we acquire alock here
+    with lock:
+        if double == True:
+            if fftsetupD.logsize < logn:
+                fftsetupD.create(logn)
+            return fftsetupD.pointer
+        else:
+            if fftsetup.logsize < logn:
+                fftsetup.create(logn)
+            return fftsetup.pointer  
     
 def destroy_fftsetup():
     """Destroys all (double and single precision) setups."""
-    FFTSETUP_DATA.clear()
-    fftsetup.destroy() 
-    fftsetupD.destroy() 
+    with lock:
+        FFTSETUP_DATA.clear()
+        fftsetup.destroy() 
+        fftsetupD.destroy() 
     
 #-------------------------------
 # Non-user functions and objects
@@ -385,7 +391,6 @@ FFTSETUP_DATA = {}
 class FFTSetupData():
     """FFTSetup data and info about the transform is stored here.
     """
-    _split_complex_pointer = None
     
     def __init__(self, in_shape, out_shape, split_in = False, split_out = False, dim = 1, double = True, direction = +1, real_transform = False):
         # check if shapes are OK
@@ -419,9 +424,7 @@ class FFTSetupData():
             self.cast_name = "DSPComplex*"
             #self.buffer_real = empty((2**max(self.size),),"float32")
             #self.buffer_imag = empty((2**max(self.size),),"float32")
-            
-        self.allocate_memory()
-        
+                 
         #buffer for temporary data
         #self.buffer_pointer = _create_split_complex_pointer(self.buffer_real, self.buffer_imag, double = self.double)
             
