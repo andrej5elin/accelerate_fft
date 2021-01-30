@@ -14,7 +14,7 @@ accelerate_fft
 
 CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of 1D ffts (real and complex) and 2D ffts (real and complex).
 
-Note that vDSP's FFT only work for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... In the current version of `accelerate_fft``, the input data has to be contiguous. Also, transform is performed over the last axis (1d fft) and last two axes (2d fft), so it mimics numpy's fft routines run with default arguments. 
+Note that vDSP's FFT only work for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... In the current version of ``accelerate_fft``, the input data has to be contiguous. Also, transform is performed over the last axis (1d fft) and last two axes (2d fft), so it mimics numpy's fft routines run with default arguments. 
 
 This module has a very primitive multi-threading support. Useful for large-size multi-signal 2d FFT. Input data has to be multi-dimensional, and it must have a size that is a multiple of nthread * nfft, where nthread is number of threads used, and nfft is the size of the fft.
 
