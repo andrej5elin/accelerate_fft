@@ -1,8 +1,9 @@
 accelerate_fft
 ==============
 
+
 .. image:: https://github.com/andrej5elin/accelerate_fft/workflows/Upload%20Python%20Package/badge.svg  
-.. image:: https://github.com/andrej5elin/accelerate_fft/workflows/Upload%20Python%20Package/badge.svg  
+    :target: https://github.com/andrej5elin/accelerate_fft/
 .. image:: https://img.shields.io/pypi/pyversions/accelerate_fft
     :target: https://pypi.org/project/accelerate_fft/
     :alt: Python version
