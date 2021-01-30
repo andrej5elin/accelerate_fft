@@ -16,7 +16,7 @@ must have a size that is a multiple of nthread  * nfft, where
 nthread is number of threads used, and nfft is the size of the fft. 
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
@@ -319,14 +319,10 @@ def create_fftsetup(logn, double = True):
     #this function must be thread-safe, so we acquire alock here
     with lock:
         if double == True:
-            if fftsetupD.logsize < logn:
-                fftsetupD.create(logn)
-            return fftsetupD.pointer
+            return fftsetupD.create(logn)
         else:
-            if fftsetup.logsize < logn:
-                fftsetup.create(logn)
-            return fftsetup.pointer  
-    
+            return fftsetup.create(logn)
+
 def destroy_fftsetup():
     """Destroys all (double and single precision) setups."""
     with lock:
@@ -343,39 +339,54 @@ class FFTSetupPointer:
     Use :func:`create_fftsetup` to build setups."""
 
     logsize = 0
+    setups = []
     
     def create(self,logsize):
-        self.destroy()
         radix = 2
-        self.logsize = logsize
-        self.pointer = lib.vDSP_create_fftsetup(logsize, radix)
+        if logsize > self.logsize:
+            self.logsize = logsize
+            self.pointer = lib.vDSP_create_fftsetup(logsize, radix)
+            self.setups.append(self.pointer)
+        elif logsize <= 0:
+            raise ValueError("Invalid logsize")
+        return self.pointer
+        
     def destroy(self):
-        try:
-            lib.vDSP_destroy_fftsetup(self.pointer)
+        for pointer in self.setups:
+            lib.vDSP_destroy_fftsetup(pointer)
+        if self.setups != []:
             del self.pointer
-            del self.logsize
-        except AttributeError:
-            pass
+            self.setups.clear()
+        self.logsize = 0
+
+    def __del__(self):
+        self.destroy()
 
 class FFTSetupDPointer:
     """fftsetupD object. This is meant to be initiated only once.
     Use :func:`create_fftsetup` to build setups.""" 
     
     logsize = 0
+    setups = []
     
     def create(self,logsize):
-        self.destroy()
         radix = 2
-        self.logsize = logsize
-        self.pointer = lib.vDSP_create_fftsetupD(logsize, radix)
+        if logsize > self.logsize:
+            self.logsize = logsize
+            self.pointer = lib.vDSP_create_fftsetupD(logsize, radix)
+            self.setups.append(self.pointer)
+        elif logsize <= 0:
+            raise ValueError("Invalid logsize")
+        return self.pointer
+        
     
     def destroy(self):
-        try:
-            lib.vDSP_destroy_fftsetupD(self.pointer)
+        for pointer in self.setups:
+            lib.vDSP_destroy_fftsetupD(pointer)
+        if self.setups != []:
             del self.pointer
-            del self.logsize
-        except AttributeError:
-            pass
+            self.setups.clear()
+        self.logsize = 0
         
     def __del__(self):
         self.destroy()
