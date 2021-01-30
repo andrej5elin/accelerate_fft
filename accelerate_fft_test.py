@@ -166,6 +166,18 @@ class TestInplaceTransforms(BaseTest):
                 fft.fft((real,imag), overwrite_x = True, split_in = True, split_out = True)
                 self.assert_equal(fr,real)
                 self.assert_equal(fi,imag)
+                
+            with self.subTest(i = 2):
+                a = a0.copy()
+                fft.fft(a, split_out = True, overwrite_x = True)
+                self.assert_equal(a,a0)
+
+            with self.subTest(i = 3):
+                real,imag = a0.real.copy(),a0.imag.copy()
+                f = fft.fft((real, imag), split_in = True)
+                fft.fft((real,imag), overwrite_x = True, split_in = True)
+                self.assert_equal(real, f.real)
+                self.assert_equal(imag,f.imag)
 
     def test_fft2(self):
         for dtype in ("complex64", "complex128"):
@@ -183,6 +195,18 @@ class TestInplaceTransforms(BaseTest):
                 fft.fft2((real,imag), overwrite_x = True, split_in = True, split_out = True)
                 self.assert_equal(fr,real)
                 self.assert_equal(fi,imag)
+                
+            with self.subTest(i = 2):
+                a = a0.copy()
+                fft.fft2(a, split_out = True, overwrite_x = True)
+                self.assert_equal(a,a0)
+
+            with self.subTest(i = 3):
+                real,imag = a0.real.copy(),a0.imag.copy()
+                f = fft.fft2((real, imag), split_in = True)
+                fft.fft2((real,imag), overwrite_x = True, split_in = True)
+                self.assert_equal(real, f.real)
+                self.assert_equal(imag,f.imag)
     
 
 
