@@ -358,6 +358,19 @@ class TestSetup(BaseTest):
         self.assertTrue(s3 is not s2)
         fft.destroy_fftsetup()
         
+class TestUnpack(BaseTest):
+    def test_unpack(self):
+        a = np.random.randn(8,4) + np.random.randn(8,4)*1j
+        b = fft.unpack(a)
+        c = fft.unpack(a, inplace = True)
+        self.assert_equal(b[...,0:-1],c)
+        
+    def test_unpack2(self):
+        a = np.random.randn(2,8,4) + np.random.randn(2,8,4)*1j
+        b = fft.unpack2(a)
+        c = fft.unpack2(a, inplace = True)
+        self.assert_equal(b[...,0:-1],c)
+        
                  
 if __name__ == '__main__':
     unittest.main()
