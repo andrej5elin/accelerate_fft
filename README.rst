@@ -3,8 +3,7 @@ accelerate_fft
 
 .. image:: https://img.shields.io/pypi/pyversions/accelerate_fft
     :target: https://pypi.org/project/accelerate_fft/
-    :alt: Python version
-    
+    :alt: Python version 
 .. image:: https://img.shields.io/github/workflow/status/andrej5elin/accelerate_fft/Upload%20Python%20Package   
     :alt: GitHub Workflow Status
     
