@@ -1,16 +1,16 @@
 accelerate_fft
 ==============
 
-CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of ffts.
+CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of 1D ffts (real and complex) and 2D ffts (real and complex).
 
-Note that vDSP FFT only works for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... Input data has to be contiguous. Transformation is performed over the last axis (1d fft) and last two axes (2d fft).
+Note that vDSP's FFT only work for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... In the current version of `accelerate_fft``, the input data has to be contiguous. Also, transform is performed over the last axis (1d fft) and last two axes (2d fft), so it mimics numpy's fft routines run with default arguments. 
 
 This module has a very primitive multi-threading support. Useful for large-size multi-signal 2d FFT. Input data has to be multi-dimensional, and it must have a size that is a multiple of nthread * nfft, where nthread is number of threads used, and nfft is the size of the fft.
 
 Why?
 ----
 For intel-based macs use `mkl_fft <https://github.com/IntelPython/mkl_fft>`_, which is one of the fastest FFT libraries out there.
-However, the Accelerate implementation could be faster than MKL on Apple Silicon macs. 
+However, the Accelerate implementation can be faster than MKL on Apple Silicon macs. 
 
 Requisites
 ----------
@@ -72,6 +72,13 @@ Note that for small arrays, because of the python thread-creation overhead, this
 
     >>> fft.set_nthreads(1)
     4
+    
+Because vDSP's FFT work in split-complex data format. You may prepare and retrieve the data in this format directly. This is controlled by the `split_in` and `split_out` arguments, e.g.::
+
+    >>> real, imag = fft.fft2(a, split_out = True)
+    >>> real, imag = fft.ifft2((real, imag), split_in = True, split_out = True, overwrite_x = True)
+    
+Here, the `overwrite_x`argument defines that the transform is done inplace and it overwrites the input data.
 
 License
 -------
