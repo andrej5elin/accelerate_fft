@@ -1,7 +1,7 @@
 accelerate_fft
 ==============
 
-.. image:: https://img.shields.io/github/workflow/status/andrej5elin/accelerate_fft/Upload%20Python%20Package   
+.. image:: https://github.com/andrej5elin/accelerate_fft/workflows/Upload%20Python%20Package/badge.svg  
     :alt: GitHub Workflow Status
     
 .. image:: https://img.shields.io/pypi/pyversions/accelerate_fft
