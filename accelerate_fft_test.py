@@ -148,8 +148,47 @@ class TestResults(BaseTest):
         b = a.reshape(2,8,4)
         self.assert_equal(fft.irfft2(fft.rfft2(a))/8/4/2, a)
         self.assert_equal(fft.irfft2(fft.rfft2(b))/4/8/2, b)
+
+class TestInplaceTransforms(BaseTest):
+    def test_fft(self):
+        for dtype in ("complex64", "complex128"):
+            a0 = np.array(np.random.randn(2,4,8),dtype)
+           
+            f = fft.fft(a0)
+            with self.subTest(i = 0):
+                a = a0.copy()
+                fft.fft(a, overwrite_x = True)
+                self.assert_equal(a,f)
+    
+            with self.subTest(i = 1):
+                real,imag = a0.real.copy(),a0.imag.copy()
+                fr,fi = fft.fft((real, imag), split_in = True, split_out = True)
+                fft.fft((real,imag), overwrite_x = True, split_in = True, split_out = True)
+                self.assert_equal(fr,real)
+                self.assert_equal(fi,imag)
+
+    def test_fft2(self):
+        for dtype in ("complex64", "complex128"):
+            a0 = np.array(np.random.randn(2,4,8),dtype)
+           
+            f = fft.fft2(a0)
+            with self.subTest(i = 0):
+                a = a0.copy()
+                fft.fft2(a, overwrite_x = True)
+                self.assert_equal(a,f)
+      
+            with self.subTest(i = 1):
+                real,imag = a0.real.copy(),a0.imag.copy()
+                fr,fi = fft.fft2((real, imag), split_in = True, split_out = True)
+                fft.fft2((real,imag), overwrite_x = True, split_in = True, split_out = True)
+                self.assert_equal(fr,real)
+                self.assert_equal(fi,imag)
+    
+
+
+class TestSplitDataTransform(BaseTest):
         
-    def test_fft2_double_split(self):
+    def test_fft2_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
         a_split = a.real.copy(), a.imag.copy()
         with self.subTest(i = 0):
@@ -173,7 +212,7 @@ class TestResults(BaseTest):
             self.assert_equal(a_split[0], out_split[0]/8/4)
             self.assert_equal(a_split[1], out_split[1]/8/4)                                
 
-    def test_fft2_float_split(self):
+    def test_fft2_float(self):
         a = np.array(np.random.randn(2,4,8),"float32")
         a_split = a.real.copy(), a.imag.copy()
         with self.subTest(i = 0):
@@ -197,7 +236,7 @@ class TestResults(BaseTest):
             self.assert_equal(a_split[0], out_split[0]/8/4)
             self.assert_equal(a_split[1], out_split[1]/8/4)    
 
-    def test_fft_double_split(self):
+    def test_fft_double(self):
         a = np.array(np.random.randn(8),"complex128")
         a0 = a.copy()
         a_split = a.real.copy(), a.imag.copy()
@@ -223,7 +262,7 @@ class TestResults(BaseTest):
             self.assert_equal(a_split[0], out_split[0]/8)
             self.assert_equal(a_split[1], out_split[1]/8)     
 
-    def test_fft_float_split(self):
+    def test_fft_float(self):
         a = np.array(np.random.randn(8),"complex64")
         a0 = a.copy()
         a_split = a.real.copy(), a.imag.copy()
@@ -249,32 +288,42 @@ class TestResults(BaseTest):
             self.assert_equal(a_split[0], out_split[0]/8)
             self.assert_equal(a_split[1], out_split[1]/8)   
                                
-    def test_rfft2_double_split(self):
+    def test_rfft2_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
         with self.subTest(i = 0):
             self.assert_equal(fft.irfft2(fft.rfft2(a, split_out = True), split_in = True)/8/4/2, a)
 
-    def test_rfft2_float_split(self):
+    def test_rfft2_float(self):
         a = np.array(np.random.randn(2,4,8),"float32")
         with self.subTest(i = 0):
             self.assert_equal(fft.irfft2(fft.rfft2(a, split_out = True), split_in = True)/8/4/2, a)
 
-    def test_rfft_double_split(self):
+    def test_rfft_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
         with self.subTest(i = 0):
             self.assert_equal(fft.irfft(fft.rfft(a, split_out = True), split_in = True)/8/2, a)
 
-    def test_rfft_float_split(self):
+    def test_rfft_float(self):
         a = np.array(np.random.randn(2,4,8),"float32")
         with self.subTest(i = 0):
             self.assert_equal(fft.irfft(fft.rfft(a, split_out = True), split_in = True)/8/2, a)
 
   
-class TestResultsThreaded( TestResults):
+class TestResultsThreaded(TestResults):
     
     def setUp(self):
         fft.set_nthreads(2)
-                       
+        
+class TestSplitDataTransformThreaded(TestSplitDataTransform):
+    
+    def setUp(self):
+        fft.set_nthreads(2)
+        
+class TestInplaceTransformThreaded(TestInplaceTransforms):
+    
+    def setUp(self):
+        fft.set_nthreads(2)      
+                 
 if __name__ == '__main__':
     unittest.main()
     
