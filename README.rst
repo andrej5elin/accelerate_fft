@@ -5,6 +5,8 @@ accelerate_fft
     :target: https://pypi.org/project/accelerate_fft/
     :alt: Python version
     
+.. image:: https://img.shields.io/github/workflow/status/andrej5elin/accelerate_fft/Upload%20Python%20Package   :alt: GitHub Workflow Status
+    
 CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of 1D ffts (real and complex) and 2D ffts (real and complex).
 
 Note that vDSP's FFT only work for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... In the current version of `accelerate_fft``, the input data has to be contiguous. Also, transform is performed over the last axis (1d fft) and last two axes (2d fft), so it mimics numpy's fft routines run with default arguments. 
