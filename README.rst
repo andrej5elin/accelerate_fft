@@ -8,6 +8,9 @@ accelerate_fft
 .. image:: https://github.com/andrej5elin/accelerate_fft/workflows/Upload%20Python%20Package/badge.svg  
     :target: https://github.com/andrej5elin/accelerate_fft/
 
+.. image:: https://codecov.io/gh/andrej5elin/accelerate_fft/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/andrej5elin/accelerate_fft
+
 
 CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of 1D ffts (real and complex) and 2D ffts (real and complex).
 
