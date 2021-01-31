@@ -96,7 +96,7 @@ Here, the `overwrite_x` argument defines that the transform is done inplace and 
 Benchmarks
 ----------
 
-Perfomred on Mac MINI Late 2020 (M1) on array size 8x2048x2048 single precision complex.
+.. todo
 
 License
 -------
