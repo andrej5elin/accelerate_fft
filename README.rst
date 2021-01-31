@@ -21,7 +21,9 @@ This module has a very primitive multi-threading support. Useful for large-size 
 Why?
 ----
 For Intel-based macs use `mkl_fft <https://github.com/IntelPython/mkl_fft>`_, which is one of the fastest FFT libraries out there.
-However, the Accelerate implementation can be faster than MKL on Apple Silicon macs. 
+However, the Accelerate implementation can be faster than MKL on Apple Silicon macs. See benchmarks below.
+
+
 
 Requisites
 ----------
@@ -90,6 +92,11 @@ Because vDSP's FFT work in split-complex data format. You may prepare and retrie
     >>> real, imag = fft.ifft2((real, imag), split_in = True, split_out = True, overwrite_x = True)
     
 Here, the `overwrite_x` argument defines that the transform is done inplace and it overwrites the input data.
+
+Benchmarks
+----------
+
+Perfomred on Mac MINI Late 2020 (M1) on array size 8x2048x2048 single precision complex.
 
 License
 -------
