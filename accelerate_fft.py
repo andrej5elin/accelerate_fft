@@ -486,24 +486,6 @@ def _optimal_flattened_shape(original_shape, dim = 1):
         newshape = (newshape,) + original_shape[-2:]
     return newshape
 
-def _sequential_call(fftfunc,setup, *args,**kwargs):
-    # a simple sequential runner 
-    [fftfunc(setup,*arg,**kwargs) for arg in zip(*args)] 
-
-def _calculate_fft(fftfunc,*args,**kwds):
-    """Runs fft function with given arguments (optionally in parallel 
-    using a ThreadPool)"""
-    nthreads = fft_config["nthreads"]
-
-    if nthreads > 1:
-        pool = Pool(nthreads)
-        workers = [pool.apply_async(_sequential_call, args = (fftfunc,) + arg, kwds = kwds) for arg in zip(*args)] 
-        _ = [w.get() for w in workers]
-        pool.close()
-    else:
-        setup = args[0]
-        args = (setup[0],) + args[1:]
-        _sequential_call(fftfunc,*args, **kwds)
         
       
 def _create_split_complex_pointer(array_real, array_imag, double = False):
@@ -579,11 +561,28 @@ def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out 
     
     return setup, a, out
 
-
 #-----------------
 # Worker functions
 #-----------------
 
+def _sequential_call(fftfunc,setup, *args,**kwargs):
+    # a simple sequential runner 
+    [fftfunc(setup,*arg,**kwargs) for arg in zip(*args)] 
+
+def _calculate_fft(fftfunc,*args,**kwds):
+    """Runs fft function with given arguments (optionally in parallel 
+    using a ThreadPool)"""
+    nthreads = fft_config["nthreads"]
+
+    if nthreads > 1:
+        pool = Pool(nthreads)
+        workers = [pool.apply_async(_sequential_call, args = (fftfunc,) + arg, kwds = kwds) for arg in zip(*args)] 
+        _ = [w.get() for w in workers]
+        pool.close()
+    else:
+        setup = args[0]
+        args = (setup[0],) + args[1:]
+        _sequential_call(fftfunc,*args, **kwds)
 
 def _get_vDSP_fft_inplace(double = False, dim = 1, real_transform = False):
     if double:
