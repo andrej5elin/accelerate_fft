@@ -96,7 +96,19 @@ Here, the `overwrite_x` argument defines that the transform is done inplace and 
 Benchmarks
 ----------
 
-.. todo
+Testing was done on a MAC Mini 8GB using `fft2` on input array of shape `(8,2048,2048)` and of `"complex64"` dtype.
+
+
+==================  ====== ====== ======  ====== ====== ======
+                     ``accelerate_fft``        ``mkl_fft``
+------------------  --------------------  --------------------
+N threads              1      2      4       1      2      4
+==================  ====== ====== ======  ====== ====== ======  
+normal               195    116     85      204    108    66
+inplace                                     200    100    59
+split                180    107     69       
+split & inplace      147     84     55   
+
 
 License
 -------
