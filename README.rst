@@ -110,13 +110,13 @@ Testing was done using `fft2` on input array of shape `(8,2048,2048)` and of `"c
 | t (ms) inplace   |  147 |   97 |  59  | 200  |  100 |  59  |  334 |  188 | 171  | 248  |  154 | 153  |
 +------------------+------+------+------+------+------+------+------+------+------+------+------+------+
 
-The inplace version (`overwrite_x = True` option) was done on split data format for the ``accelerate_fft`` (`split_in = True` and `split_out = True`). Results show that on intel-based MACs, ``mkl_fft`` performs better, however, on Apple Silicon, the single-core calculation using ``accelerate_fft`` with split-data format and inplace transform works faster. Still, multi-threading works better in ``mkl_fft``. Note that for ``mkl_fft`` you have to call::
+The inplace version (`overwrite_x = True`) was done on split data format (`split_in = True` and `split_out = True`) for the ``accelerate_fft``. Results show that on intel-based MACs, ``mkl_fft`` performs better, however, on Apple Silicon, ``accelerate_fft`` is slightly faster. Note that for ``mkl_fft`` you have to call::
 
 >>> [mkl_fft.fft2(x, overwrite_x = True) for x in a]
 
 whereas 
 
->>> mkl_fft.fft2(a, overwrite_x = True
+>>> mkl_fft.fft2(a, overwrite_x = True)
 
 was much slower to compute. 
 
