@@ -96,19 +96,29 @@ Here, the `overwrite_x` argument defines that the transform is done inplace and 
 Benchmarks
 ----------
 
-Testing was done on a MAC Mini 8GB using `fft2` on input array of shape `(8,2048,2048)` and of `"complex64"` dtype.
+Testing was done using `fft2` on input array of shape `(8,2048,2048)` and of `"complex64"` dtype.
 
++------------------+------+------+------+------+------+------+------+------+------+------+------+------+
+|                  |      MAC Mini (2020) ,M1, 8GB           | MBP (Early 2015), 2.7 GHz Intel i5, 8GB |
++------------------+------+------+------+------+------+------+------+------+------+------+------+------+
+|  library         | ``accelerate_fft`` |    ``mkl_fft``     | ``accelerate_fft`` |    ``mkl_fft``     |
++------------------+------+------+------+------+------+------+------+------+------+------+------+------+
+|  N threads       |   1  |   2  |   4  |   1  |   2  |   4  |   1  |   2  |   4  |   1  |   2  |   4  |
++==================+======+======+======+======+======+======+======+======+======+======+======+======+  
+| t (ms) normal    |  195 |  116 |  85  | 204  |  108 |  66  |  522 |  324 | 298  | 294  |  179 | 180  |
++------------------+------+------+------+------+------+------+------+------+------+------+------+------+
+| t (ms) inplace   |  147 |   97 |  59  | 200  |  100 |  59  |  334 |  188 | 171  | 248  |  154 | 153  |
++------------------+------+------+------+------+------+------+------+------+------+------+------+------+
 
-+------------------+------+------+------+------+------+------+
-|                  | ``accelerate_fft`` |    ``mkl_fft``     |
-+------------------+------+------+------+------+------+------+
-|  N threads       |   1  |   2  |   4  |   1  |   2  |   4  |
-+==================+======+======+======+======+======+======+  
-| normal           |  195 |  116 |  85  | 204  |  108 |  66  |
-+------------------+------+------+------+------+------+------+
-| inplace          |  147 |   97 |  59  | 200  |  100 |  59  |
-+------------------+------+------+------+------+------+------+
+The inplace version (`overwrite_x = True` option) was done on split data format for the ``accelerate_fft`` (`split_in = True` and `split_out = True`). Results show that on intel-based MACs, ``mkl_fft`` performs better, however, on Apple Silicon, the single-core calculation using ``accelerate_fft`` with split-data format and inplace transform works faster. Still, multi-threading works better in ``mkl_fft``. Note that for ``mkl_fft`` you have to call::
 
+>>> [mkl_fft.fft2(x, overwrite_x = True) for x in a]
+
+whereas 
+
+>>> mkl_fft.fft2(a, overwrite_x = True
+
+was much slower to compute. 
 
 License
 -------
