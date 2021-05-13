@@ -16,7 +16,7 @@ must have a size that is a multiple of nthread  * nfft, where
 nthread is number of threads used, and nfft is the size of the fft. 
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
@@ -316,7 +316,7 @@ def create_fftsetup(logn, double = True):
     double : bool
         Indicates whether we are working with double precision (default) or not.
     """
-    #this function must be thread-safe, so we acquire alock here
+    #this function must be thread-safe, so we acquire a lock here
     with lock:
         if double == True:
             return fftsetupD.create(logn)
@@ -569,18 +569,85 @@ def _sequential_call(fftfunc,setup, *args,**kwargs):
     # a simple sequential runner 
     [fftfunc(setup,*arg,**kwargs) for arg in zip(*args)] 
 
+POOL = {}
+
+from threading import Thread
+from queue import Queue
+
+class PoolWorker():
+    """Mimics the object returned by ThreadPool.apply_async method."""
+    def __init__(self, queue):
+        self.queue = queue
+        
+    def get(self):
+        return self.queue.get()
+
+class Pool:
+    """A multiprocessing.pool.ThreadPool -like object.
+    
+    Implements only necessary part of ThreadPool API.
+    """
+    def __init__(self,nthreads):
+        def worker(i, inputs, results):
+            #print("Thread ", i, "started")
+            while True:
+                data = inputs.get()
+                if data is None:
+                    results.put(None)
+                    break
+                else:
+                    func, args, kwargs = data
+                    out = func(*args,**kwargs)
+                    results.put((i,out))
+            #print("Thread ", i, "stopped")
+            
+            
+        self.nthreads = nthreads
+        self.results = [Queue() for i in range(nthreads)]
+        self.inputs = [Queue() for i in range(nthreads)]
+        self.threads = [Thread(target = worker, args = (i,self.inputs[i],self.results[i]), daemon = True) for i in range(nthreads)]
+        [t.start() for t in self.threads]
+        self.nruns = 0
+        
+    def apply_async(self,func, args = (), kwds = {}):
+        index = self.nruns % self.nthreads
+        self.inputs[index].put((func,args,kwds))
+        self.nruns += 1
+        return PoolWorker(self.results[index])
+              
+    def close(self):
+        for q in self.inputs:
+            q.put(None)
+        for q in self.results:
+            while q.get(timeout = 1) != None:
+                1
+        for t in self.threads:
+            t.join()
+                 
+    def __del__(self):
+        self.close()
+
+def clear_pool():
+    POOL.clear()
+    
 def _calculate_fft(fftfunc,*args,**kwds):
     """Runs fft function with given arguments (optionally in parallel 
     using a ThreadPool)"""
     nthreads = fft_config["nthreads"]
 
     if nthreads > 1:
-        pool = Pool(nthreads)
+        try:
+            pool = POOL[nthreads]
+        except KeyError:
+            pool = Pool(nthreads)
+            POOL[nthreads] = pool
+        #pool = Pool(nthreads)
         workers = [pool.apply_async(_sequential_call, args = (fftfunc,) + arg, kwds = kwds) for arg in zip(*args)] 
         _ = [w.get() for w in workers]
-        pool.close()
+        #pool.close()
     else:
         setup = args[0]
+        #setup is a list. For single-threaded run, take the first and only element of the list.
         args = (setup[0],) + args[1:]
         _sequential_call(fftfunc,*args, **kwds)
 

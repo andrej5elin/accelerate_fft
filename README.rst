@@ -120,6 +120,14 @@ whereas
 
 was much slower to compute. 
 
+Release notes
+-------------
+
+Version 0.1.4
++++++++++++++
+
+Improves multi-threading on smaller arrays.
+
 License
 -------
 

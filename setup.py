@@ -18,7 +18,7 @@ Implements fft using apple's accelerate framework (vDSP)
 #packages = find_packages()
 
 setup(name = 'accelerate_fft',
-      version = "0.1.4",
+      version = "0.1.5",
       description = "FFT for MAC using vDSP",
       long_description=long_description,
       long_description_content_type="text/markdown",
