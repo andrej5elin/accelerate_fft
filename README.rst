@@ -126,7 +126,7 @@ Release notes
 Version 0.1.5
 +++++++++++++
 
-Improves multi-threading on smaller arrays.
+Improves multi-threaded fft calculation on smaller arrays and in 1D transforms.
 
 License
 -------
