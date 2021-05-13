@@ -268,7 +268,7 @@ def unpack2(a, inplace = False):
     """Unpack vDSP rfft2 data format of shape (..., n, n/2) into regular
     numpy-like rfft2 of shape (..., n, n/2 + 1).
     
-    Optionally, this can be done inplace without calculating the last row.
+    Optionally, this can be done inplace without calculating the last column.
     """
     n0,n1 = a.shape[-2:] #number of rows
     n0_half = n0//2
