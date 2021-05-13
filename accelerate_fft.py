@@ -477,16 +477,21 @@ def _optimal_flattened_shape(original_shape, dim = 1):
     if len(original_shape) == 1:
         #has to be 2D data
         original_shape = (1,) + original_shape
-    
-    newshape = reduce((lambda x,y: x*y), original_shape[:-2] or [1])
+
+    newshape = reduce((lambda x,y: x*y), original_shape[:-dim] or [1])
     if fft_config["nthreads"] > 1:
         n = _optimal_workers(newshape,nthreads)
-        newshape = (n,newshape//n,) + original_shape[-2:]
+        if dim == 1:
+            newshape = (n,1,newshape//n,) + original_shape[-1:]
+        else:
+            newshape = (n,newshape//n,) + original_shape[-2:]
     else:
-        newshape = (newshape,) + original_shape[-2:]
+        if dim == 1:
+            newshape = (1,newshape,) + original_shape[-1:]
+        else:
+            newshape = (newshape,) + original_shape[-2:]
+            
     return newshape
-
-        
       
 def _create_split_complex_pointer(array_real, array_imag, double = False):
     """Creates a split-complex data pointer from two real numpy arrays"""
@@ -530,13 +535,22 @@ def _get_out_shape(in_shape, dim = 1, direction = +1, real_transform = False):
 def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out = False, direction = +1, real_transform = False):
     """checks input parameters and creates a valid fft setup and input/output arrays"""
     # make an array and read dtype, and shape
-    a = (np.asarray(a[0]),np.asarray(a[1])) if split_in else np.asarray(a)
-    dtype = a[0].dtype if split_in else a.dtype
-    shape = a[0].shape if split_in else a.shape
-    
+    if split_in:
+        a0,a1 = np.asarray(a[0]),np.asarray(a[1])
+        dtype = a0.dtype
+        shape = a0.shape 
+        new_shape = _optimal_flattened_shape(a0.shape, dim = dim)
+        a = (a0.reshape(new_shape), a1.reshape(new_shape))
+    else:
+        a = np.asarray(a)
+        dtype = a.dtype
+        shape = a.shape 
+        new_shape = _optimal_flattened_shape(a.shape, dim = dim)
+        a = a.reshape(new_shape)  
+
     # determine the allowed type and shapes of the input and output arrays
     in_dtype, out_dtype = _get_in_out_dtype(dtype, split_in, split_out, direction, real_transform)
-    out_shape = _get_out_shape(shape, dim, direction, real_transform)
+    out_shape = _get_out_shape(new_shape, dim, direction, real_transform)
 
     # make sure it is right type
     a = tuple((np.asarray(d,in_dtype) for d in a)) if split_in else np.asarray(a,in_dtype)  
@@ -550,7 +564,7 @@ def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out 
         out = (np.empty(out_shape,out_dtype), np.empty(out_shape,out_dtype)) if split_out else np.empty(out_shape,out_dtype) 
     #determine if we need to use double precision    
     double = dtype in ("float64","complex128") 
-    key = (shape[-2:], out_shape[-2:],split_in, split_out, dim, double,direction,real_transform)
+    key = (new_shape[-2:], out_shape[-2:],split_in, split_out, dim, double,direction,real_transform)
     try:
         #if setup already exists, just take one.
         setup = FFTSETUP_DATA[key] 
@@ -559,7 +573,7 @@ def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out 
         setup = [FFTSetupData(*key) for i in range(fft_config["nthreads"])]    
         FFTSETUP_DATA[key] = setup
     
-    return setup, a, out
+    return shape, setup, a, out
 
 #-----------------
 # Worker functions
@@ -620,7 +634,7 @@ class Pool:
             q.put(None)
         for q in self.results:
             while q.get(timeout = 1) != None:
-                1
+                pass
         for t in self.threads:
             t.join()
                  
@@ -628,6 +642,9 @@ class Pool:
         self.close()
 
 def clear_pool():
+    """Clears thread pool. Deletes all Pool objects, which terminates all
+    running background threads."""
+    
     POOL.clear()
     
 def _calculate_fft(fftfunc,*args,**kwds):
@@ -773,50 +790,45 @@ def _sfftos(setup, ar,ai, outr, outi, n = 1, dim = 1, direction = +1):
         _func(setup.pointer, _pins, 1,0, _pouts, 1,0,setup.size[0], setup.size[1],direction)
 
 def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out = False, direction = +1, real_transform = False):
-    setup, a, out = _init_setup_and_arrays(a, overwrite_x, dim = dim, split_in = split_in, split_out = split_out, direction = direction, real_transform = real_transform)
+    original_shape, setup, a, out = _init_setup_and_arrays(a, overwrite_x, dim = dim, split_in = split_in, split_out = split_out, direction = direction, real_transform = real_transform)
     
     if split_in == True:
         #a must be a tuple of length twp for the two arrays
         a_real, a_imag = a
-        # reshape data, so that we can compute fft sequentially.
-        shape = _optimal_flattened_shape(a_real.shape, dim = dim)
-        _a_real, _a_imag = a_real.reshape(shape), a_imag.reshape(shape)
-        
-        n = shape[-2]
+
+        n = a_real.shape[-2]
        
         if split_out == True:
             if overwrite_x == False:
                 #out of place transform
                 out_real, out_imag = out
-                shape = _optimal_flattened_shape(out_real.shape,  dim = dim)
-                _out_real, _out_imag =  out_real.reshape(shape), out_imag.reshape(shape)
-                _calculate_fft(_sfftos , setup, _a_real,_a_imag,_out_real,_out_imag, n = n, dim = dim, direction = direction)
+                _calculate_fft(_sfftos , setup, a_real,a_imag,out_real,out_imag, n = n, dim = dim, direction = direction)
+
             else:
                 #inplace transform
-                _calculate_fft(_sfftis, setup, _a_real,_a_imag, n = n, dim = dim, direction = direction)
+                _calculate_fft(_sfftis, setup, a_real,a_imag, n = n, dim = dim, direction = direction)
         else:
-            shape = _optimal_flattened_shape(out.shape,  dim = dim)
-            _out = out.reshape(shape)
             if overwrite_x == True:
-                _calculate_fft(_sffti, setup, _a_real,_a_imag,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
+                _calculate_fft(_sffti, setup, a_real,a_imag,out, n = n, dim = dim, direction = direction, real_transform = real_transform)
             else:
-                _calculate_fft(_sffto, setup, _a_real,_a_imag,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
+                _calculate_fft(_sffto, setup, a_real,a_imag,out, n = n, dim = dim, direction = direction, real_transform = real_transform)
 
     else:
-        shape = _optimal_flattened_shape(a.shape, dim = dim)
-        n = shape[-2]
-        _a = a.reshape(shape)
-            
+
+        n = a.shape[-2]
+                  
         if split_out == False:
-            shape = _optimal_flattened_shape(out.shape, dim = dim)
-            _out =  out.reshape(shape)
-            _calculate_fft(_fft, setup, _a,_out, n = n, dim = dim, direction = direction, real_transform = real_transform)
+            _calculate_fft(_fft, setup, a,out, n = n, dim = dim, direction = direction, real_transform = real_transform)
         else:
-            shape = _optimal_flattened_shape(out[0].shape,  dim = dim)
-            _out_real, _out_imag =  out[0].reshape(shape), out[1].reshape(shape)
-            _calculate_fft(_ffts, setup, _a,_out_real,_out_imag, n = n, dim = dim, direction = direction, real_transform = real_transform)
-    
-    return out   
+            out_real, out_imag =  out
+            _calculate_fft(_ffts, setup, a,out_real,out_imag, n = n, dim = dim, direction = direction, real_transform = real_transform)
+    if split_out:
+        out_shape = original_shape[:-1] + out[0].shape[-1:]
+        return out[0].reshape(out_shape), out[1].reshape(out_shape)
+        
+    else:
+        out_shape = original_shape[:-1] + out.shape[-1:]
+        return out.reshape(out_shape)   
 
 
 
