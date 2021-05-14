@@ -16,7 +16,7 @@ must have a size that is a multiple of nthread  * nfft, where
 nthread is number of threads used, and nfft is the size of the fft. 
 """
 
-__version__ = "0.1.5"
+__version__ = "0.2.0"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
@@ -475,7 +475,7 @@ def _optimal_flattened_shape(original_shape, dim = 1):
     """Finds a shape for a flattened array, so that we can then iterate over it"""
     nthreads = fft_config["nthreads"]
     if len(original_shape) == 1:
-        #has to be 2D data
+        #Even for 1D transforms data has to be 2D data.
         original_shape = (1,) + original_shape
 
     newshape = reduce((lambda x,y: x*y), original_shape[:-dim] or [1])
@@ -492,6 +492,27 @@ def _optimal_flattened_shape(original_shape, dim = 1):
             newshape = (newshape,) + original_shape[-2:]
             
     return newshape
+
+def _optimal_flattened_shape(original_shape, dim = 1):
+    """Finds a shape for a flattened array, so that we can then iterate over it"""
+    nthreads = fft_config["nthreads"]
+    if len(original_shape) == 1:
+        #Even for 1D transforms data has to be 3D data. 
+        # algorithm iterates over the first axis, transform is done on 2D data.
+        return (1,1) + original_shape
+    
+    elif len(original_shape) == 2:
+        if dim == 1:
+            # we need to reduce the shape
+            newshape = reduce((lambda x,y: x*y), original_shape[:-1])
+            n = _optimal_workers(newshape,nthreads)
+            return (n,newshape//n) + original_shape[:-1]
+        else:
+            return (1,) + original_shape
+    else:
+        newshape = reduce((lambda x,y: x*y), original_shape[:-2])
+        return (newshape,) + original_shape[-2:]
+
       
 def _create_split_complex_pointer(array_real, array_imag, double = False):
     """Creates a split-complex data pointer from two real numpy arrays"""
@@ -579,9 +600,6 @@ def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out 
 # Worker functions
 #-----------------
 
-def _sequential_call(fftfunc,setup, *args,**kwargs):
-    # a simple sequential runner 
-    [fftfunc(setup,*arg,**kwargs) for arg in zip(*args)] 
 
 POOL = {}
 
@@ -646,7 +664,11 @@ def clear_pool():
     running background threads."""
     
     POOL.clear()
-    
+
+def _sequential_call(fftfunc,setup, *args,**kwargs):
+    # a simple sequential runner 
+    [fftfunc(setup,*arg,**kwargs) for arg in zip(*args)] 
+   
 def _calculate_fft(fftfunc,*args,**kwds):
     """Runs fft function with given arguments (optionally in parallel 
     using a ThreadPool)"""
@@ -659,7 +681,9 @@ def _calculate_fft(fftfunc,*args,**kwds):
             pool = Pool(nthreads)
             POOL[nthreads] = pool
         #pool = Pool(nthreads)
-        workers = [pool.apply_async(_sequential_call, args = (fftfunc,) + arg, kwds = kwds) for arg in zip(*args)] 
+        setup = args[0]
+        args = args[1:]
+        workers = [pool.apply_async(fftfunc, args = (setup[i%nthreads],) + arg, kwds = kwds) for i,arg in enumerate(zip(*args))] 
         _ = [w.get() for w in workers]
         #pool.close()
     else:

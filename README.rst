@@ -123,7 +123,7 @@ was much slower to compute.
 Release notes
 -------------
 
-Version 0.1.5
+Version 0.2.0
 +++++++++++++
 
 Improves multi-threaded fft calculation on smaller arrays and in 1D transforms.
