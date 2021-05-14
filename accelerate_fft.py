@@ -470,29 +470,6 @@ def _optimal_workers(size, nthreads):
     else:
         return _optimal_workers(size, nthreads-1)
 
-
-def _optimal_flattened_shape(original_shape, dim = 1):
-    """Finds a shape for a flattened array, so that we can then iterate over it"""
-    nthreads = fft_config["nthreads"]
-    if len(original_shape) == 1:
-        #Even for 1D transforms data has to be 2D data.
-        original_shape = (1,) + original_shape
-
-    newshape = reduce((lambda x,y: x*y), original_shape[:-dim] or [1])
-    if fft_config["nthreads"] > 1:
-        n = _optimal_workers(newshape,nthreads)
-        if dim == 1:
-            newshape = (n,1,newshape//n,) + original_shape[-1:]
-        else:
-            newshape = (n,newshape//n,) + original_shape[-2:]
-    else:
-        if dim == 1:
-            newshape = (1,newshape,) + original_shape[-1:]
-        else:
-            newshape = (newshape,) + original_shape[-2:]
-            
-    return newshape
-
 def _optimal_flattened_shape(original_shape, dim = 1):
     """Finds a shape for a flattened array, so that we can then iterate over it"""
     nthreads = fft_config["nthreads"]
