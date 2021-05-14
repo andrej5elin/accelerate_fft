@@ -20,7 +20,7 @@ __version__ = "0.2.0"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
-from multiprocessing.pool import ThreadPool as Pool
+#from multiprocessing.pool import ThreadPool as Pool
 import threading
 #from multiprocessing import Pool
 from functools import reduce
