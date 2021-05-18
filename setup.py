@@ -33,7 +33,7 @@ setup(name = 'accelerate_fft',
       #  '': ['*.dat',"*.ini"]}, d
       setup_requires=["cffi>=1.0.0"],
       cffi_modules=["accelerate_fft_build.py:ffibuilder"], # "filename:global"
-      install_requires=["cffi>=1.0.0"],
+      install_requires=["cffi>=1.0.0","numpy"],
       classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
