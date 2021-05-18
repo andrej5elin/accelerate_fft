@@ -53,7 +53,7 @@ def set_nthreads(nthreads):
     FFTSETUP_DATA.clear()
     return current_value
 
-def fft(a, overwrite_x = False, split_in = False, split_out = False):
+def fft(a, n = None, axis = -1, norm = None, overwrite_x = False, split_in = False, split_out = False):
     """Returns a dicrete Fourier transform.
     
     Parameters
@@ -61,6 +61,9 @@ def fft(a, overwrite_x = False, split_in = False, split_out = False):
     a : ndarray or (ndarray,ndarray)
         Input complex array (if split_in = False) or a tuple of float arrays
         (if split_in = True). 
+    axis : int, optional
+        Axis over which to compute the FFT.  If not given, the last axis is
+        used.
     overwrite_x  : bool
         Specifies whether input data can be overwritten. Whether data is actually
         overwritten depends on the `split_in` and `split_out` arguments.
@@ -77,9 +80,9 @@ def fft(a, overwrite_x = False, split_in = False, split_out = False):
         Output complex array (if split_out = False) or a tuple of float arrays
         (if split_out = True). 
     """
-    return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = +1)
+    return generalized_fft(a, n = n, axis = axis, norm = norm, overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = +1)
 
-def ifft(a, overwrite_x = False, split_in = False, split_out = False):
+def ifft(a, n = None, axis = -1, norm = None, overwrite_x = False, split_in = False, split_out = False):
     """Returns an inverse of the dicrete Fourier transform.
     
     Note that a == ifft(fft(a))/a.shape[-1]
@@ -89,6 +92,9 @@ def ifft(a, overwrite_x = False, split_in = False, split_out = False):
     a : ndarray or (ndarray,ndarray)
         Input complex array (if split_in = False) or a tuple of float arrays
         (if split_in = True). 
+    axis : int, optional
+        Axis over which to compute the FFT.  If not given, the last axis is
+        used.
     overwrite_x  : bool
         Specifies whether input data can be overwritten. Whether data is actually
         overwritten depends on the `split_in` and `split_out` arguments.
@@ -105,9 +111,9 @@ def ifft(a, overwrite_x = False, split_in = False, split_out = False):
         Output complex array (if split_out = False) or a tuple of float arrays
         (if split_out = True). 
     """
-    return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = -1)
+    return generalized_fft(a, n = n, axis = axis, norm = norm, overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = -1)
     
-def fft2(a, overwrite_x = False, split_in = False, split_out = False):
+def fft2(a, s = None, axes = (-2,-1), norm = None, overwrite_x = False, split_in = False, split_out = False):
     """Returns a dicrete 2D Fourier transform.
         
     Parameters
@@ -115,6 +121,9 @@ def fft2(a, overwrite_x = False, split_in = False, split_out = False):
     a : ndarray or (ndarray,ndarray)
         Input complex array (if split_in = False) or a tuple of float arrays
         (if split_in = True). 
+    axes : sequence of ints, optional
+        Axes over which to compute the FFT.  If not given, the last two
+        axes are used. Only length 2 axes is supported.
     overwrite_x  : bool
         Specifies whether input data can be overwritten. Whether data is actually
         overwritten depends on the `split_in` and `split_out` arguments.
@@ -131,9 +140,9 @@ def fft2(a, overwrite_x = False, split_in = False, split_out = False):
         Output complex array (if split_out = False) or a tuple of float arrays
         (if split_out = True). 
     """
-    return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = +1, dim = 2)
+    return generalized_fft(a, s = s, axes = axes, norm = norm, overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = +1, dim = 2)
 
-def ifft2(a, overwrite_x = False, split_in = False, split_out = False):
+def ifft2(a, s = None, axes = (-2,-1), norm = None, overwrite_x = False, split_in = False, split_out = False):
     """Returns an inverse of the dicrete 2D Fourier transform.
     
     Note that a == ifft2(fft2(a))/a.shape[-1]/a.shape[-2]
@@ -143,6 +152,9 @@ def ifft2(a, overwrite_x = False, split_in = False, split_out = False):
     a : ndarray or (ndarray,ndarray)
         Input complex array (if split_in = False) or a tuple of float arrays
         (if split_in = True). 
+    axes : sequence of ints, optional
+        Axes over which to compute the FFT.  If not given, the last two
+        axes are used. Only length 2 axes is supported.
     overwrite_x  : bool
         Specifies whether input data can be overwritten. Whether data is actually
         overwritten depends on the `split_in` and `split_out` arguments.
@@ -159,9 +171,9 @@ def ifft2(a, overwrite_x = False, split_in = False, split_out = False):
         Output complex array (if split_out = False) or a tuple of float arrays
         (if split_out = True). 
     """
-    return generalized_fft(a,overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = -1, dim = 2)
+    return generalized_fft(a, s = s, axes = axes, norm = norm, overwrite_x = overwrite_x, split_in = split_in, split_out = split_out, direction = -1, dim = 2)
   
-def rfft(a, split_out = False):
+def rfft(a, n = None, axis = -1, norm = None, split_out = False):
     """Returns a dicrete Fourier transform for real input data.
     
     Note that you should call :func:`unpack`on the computed result to obtain
@@ -171,6 +183,9 @@ def rfft(a, split_out = False):
     ----------
     a : ndarray
         Input real array. 
+    axis : int, optional
+        Axis over which to compute the FFT.  If not given, the last axis is
+        used.
     split_out : bool
         If set, output data is treated as split-complex data. A tuple of two
         real arrays describing the real and imginary parts of the data.
@@ -181,9 +196,9 @@ def rfft(a, split_out = False):
         Output complex array (if split_out = False) or a tuple of float arrays
         (if split_out = True). 
     """
-    return generalized_fft(a, split_out = split_out, direction = +1, dim = 1, real_transform = True)
+    return generalized_fft(a, n = n, axis = axis, norm = norm, split_out = split_out, direction = +1, dim = 1, real_transform = True)
 
-def irfft(a, split_in =  False):
+def irfft(a, n = None, axis = -1, norm = None, split_in =  False):
     """Returns an inverse of the dicrete Fourier transform for real input data.
     
     Note that a == irfft(rfft(a))/a.shape[-1]/2 
@@ -193,6 +208,9 @@ def irfft(a, split_in =  False):
     a : ndarray or (ndarray,ndarray)
         Input complex array (if split_in = False) or a tuple of float arrays
         (if split_in = True). 
+    axis : int, optional
+        Axis over which to compute the FFT.  If not given, the last axis is
+        used.
     split_in : bool
         If set, input data is treated as split-complex data. A tuple of two
         real arrays describing the real and imginary parts of the data.
@@ -202,9 +220,9 @@ def irfft(a, split_in =  False):
     out : ndarray 
         Output float array.
     """
-    return generalized_fft(a, split_in = split_in, direction = -1, dim = 1, real_transform = True)
+    return generalized_fft(a, n = n, axis = axis, norm = norm,  split_in = split_in, direction = -1, dim = 1, real_transform = True)
 
-def rfft2(a, split_out = False):
+def rfft2(a, s = None, axes = (-2,-1), norm = None, split_out = False):
     """Returns a dicrete Fourier transform for 2D real input data.
     
     Note that you should call :func:`unpack2`on the computed result to obtain
@@ -214,6 +232,9 @@ def rfft2(a, split_out = False):
     ----------
     a : ndarray
         Input real array. 
+    axes : sequence of ints, optional
+        Axes over which to compute the FFT.  If not given, the last two
+        axes are used. Only length 2 axes is supported.
     split_out : bool
         If set, output data is treated as split-complex data. A tuple of two
         real arrays describing the real and imginary parts of the data.
@@ -224,9 +245,9 @@ def rfft2(a, split_out = False):
         Output complex array (if split_out = False) or a tuple of float arrays
         (if split_out = True). 
     """
-    return generalized_fft(a, split_out = split_out, direction = +1, dim = 2, real_transform = True)
+    return generalized_fft(a, s = s, axes = axes, norm = norm, split_out = split_out, direction = +1, dim = 2, real_transform = True)
 
-def irfft2(a, split_in = False):
+def irfft2(a, s = None, axes = (-2,-1), norm = None,split_in = False):
     """Returns an inverse of the dicrete Fourier transform for real 2D input data.
     
     Note that a == irfft2(rfft2(a))/a.shape[-1]/a.shape[-2]/2 
@@ -236,6 +257,9 @@ def irfft2(a, split_in = False):
     a : ndarray or (ndarray,ndarray)
         Input complex array (if split_in = False) or a tuple of float arrays
         (if split_in = True). 
+    axes : sequence of ints, optional
+        Axes over which to compute the FFT.  If not given, the last two
+        axes are used. Only length 2 axes is supported.
     split_in : bool
         If set, input data is treated as split-complex data. A tuple of two
         real arrays describing the real and imginary parts of the data.
@@ -245,7 +269,30 @@ def irfft2(a, split_in = False):
     out : ndarray 
         Output float array.
     """
-    return generalized_fft(a, split_in = split_in, direction = -1, dim = 2, real_transform = True)
+    return generalized_fft(a, s = s, axes = axes, norm = norm, split_in = split_in, direction = -1, dim = 2, real_transform = True)
+
+def prepare_input_1d(a,axis = -1,n = None,norm = None):
+    if n is not None:
+        raise ValueError("The 'n' argument is not yet supported!")
+    if norm is not None:
+        raise ValueError("The 'norm' argument is not yet supported!")
+    a = np.asarray(a)
+    return a
+    return np.swapaxes(a,-1,-1)
+
+def prepare_input_2d(a,axes = (-2,-1),s = None,norm = None):
+    return a
+    if s is not None:
+        raise ValueError("The 's' argument is not yet supported!")
+    if norm is not None:
+        raise ValueError("The 'norm' argument is not yet supported!")
+    a = np.asarray(a)
+    try:
+        first, last = [int(i) for i in axes]    
+    except:
+        raise ValueError("Invalid axes argument. Must be a tuple of of length 2")
+    return np.moveaxis(a,(first,last), (-2,-1))
+
 
 def unpack(a, inplace = False):
     """Unpack vDSP rfft data format of shape (...,n/2) into regular
@@ -530,21 +577,48 @@ def _get_out_shape(in_shape, dim = 1, direction = +1, real_transform = False):
     else:
         return in_shape
      
-def _init_setup_and_arrays(a, overwrite_x, dim = 1, split_in = False, split_out = False, direction = +1, real_transform = False):
+def _init_setup_and_arrays(a, n = None, s = None, axis = -1, axes = (-2,-1), norm = None, overwrite_x = False, dim = 1, split_in = False, split_out = False, direction = +1, real_transform = False):
     """checks input parameters and creates a valid fft setup and input/output arrays"""
+    
+    if n is not None:
+        raise ValueError("The 'n' argument is not yet supported!")
+    if s is not None:
+        raise ValueError("The 's' argument is not yet supported!")
+    if norm is not None:
+        raise ValueError("The 'norm' argument is not yet supported!")
+    
     # make an array and read dtype, and shape
     if split_in:
         a0,a1 = np.asarray(a[0]),np.asarray(a[1])
+        if dim == 1:
+            a0 = np.swapaxes(a0,axis,-1)
+            a1 = np.swapaxes(a1,axis,-1)
+        else:
+            a0 = np.moveaxis(a0,axes,(-2,-1))
+            a1 = np.moveaxis(a1,axes,(-2,-1))            
         dtype = a0.dtype
         shape = a0.shape 
         new_shape = _optimal_flattened_shape(a0.shape, dim = dim)
-        a = (a0.reshape(new_shape), a1.reshape(new_shape))
+        a0, a1 = (a0.reshape(new_shape), a1.reshape(new_shape))
+        if not a0.data.c_contiguous:
+            a0 = a0.copy()
+        if not a1.data.c_contiguous:
+            a1 = a1.copy()
+        a =  (a0, a1)
     else:
         a = np.asarray(a)
+        if dim == 1:
+            a = np.swapaxes(a,axis,-1)
+        else:
+            a = np.moveaxis(a,axes,(-2,-1))  
+
         dtype = a.dtype
         shape = a.shape 
         new_shape = _optimal_flattened_shape(a.shape, dim = dim)
         a = a.reshape(new_shape)  
+        if not a.data.c_contiguous:
+            a = a.copy()
+
 
     # determine the allowed type and shapes of the input and output arrays
     in_dtype, out_dtype = _get_in_out_dtype(dtype, split_in, split_out, direction, real_transform)
@@ -720,7 +794,7 @@ def _fft(setup, a, out, n = 1, dim = 1, direction = +1, real_transform = False):
     
 def _ffts(setup, a, outr, outi, n = 1, dim = 1, direction = +1, real_transform = False):
     """Same as _fft, but it leaves the data in split-complex format"""
-    
+ 
     #initialize
     _a = ffi.from_buffer(a) 
     _pa = ffi.cast(setup.cast_name,_a)
@@ -758,6 +832,7 @@ def _sffti(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = 
 
 def _sffto(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = False):
     """1D or 2D fft transform, real or complex for split-complex input data - out of place"""
+
     _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
     _out = ffi.from_buffer(out) 
     _pout = ffi.cast(setup.cast_name,_out)   
@@ -773,6 +848,7 @@ def _sffto(setup, ar, ai, out, n = 1, dim = 1, direction = +1, real_transform = 
 
 def _sfftis(setup, ar,ai, n = 1, dim = 1, direction = +1):
     """Same as _ffts (complex transform only), but with input data as split complex data. Inplace transform"""
+
     _ps = _create_split_complex_pointer(ar, ai, double = setup.double)
     _func = _get_vDSP_fft_inplace(double = setup.double, dim = dim)
     if dim == 1:
@@ -782,6 +858,7 @@ def _sfftis(setup, ar,ai, n = 1, dim = 1, direction = +1):
 
 def _sfftos(setup, ar,ai, outr, outi, n = 1, dim = 1, direction = +1):
     """out-of-place version of _sfftis"""
+
     _pins = _create_split_complex_pointer(ar, ai, double = setup.double)
     _pouts = _create_split_complex_pointer(outr, outi, double = setup.double)
     _func = _get_vDSP_fft_outplace(double = setup.double, dim = dim)
@@ -790,8 +867,8 @@ def _sfftos(setup, ar,ai, outr, outi, n = 1, dim = 1, direction = +1):
     else:
         _func(setup.pointer, _pins, 1,0, _pouts, 1,0,setup.size[0], setup.size[1],direction)
 
-def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out = False, direction = +1, real_transform = False):
-    original_shape, setup, a, out = _init_setup_and_arrays(a, overwrite_x, dim = dim, split_in = split_in, split_out = split_out, direction = direction, real_transform = real_transform)
+def generalized_fft(a,n = None, s = None, axis = -1, axes = (-2,-1), norm = None, dim = 1, overwrite_x = False, split_in = False, split_out = False, direction = +1, real_transform = False):
+    original_shape, setup, a, out = _init_setup_and_arrays(a, n = n, s = s, axis = axis, axes = axes, overwrite_x = overwrite_x, dim = dim, split_in = split_in, split_out = split_out, direction = direction, real_transform = real_transform)
     
     if split_in == True:
         #a must be a tuple of length twp for the two arrays
@@ -825,11 +902,21 @@ def generalized_fft(a,dim = 1, overwrite_x = False, split_in = False, split_out 
             _calculate_fft(_ffts, setup, a,out_real,out_imag, n = n, dim = dim, direction = direction, real_transform = real_transform)
     if split_out:
         out_shape = original_shape[:-1] + out[0].shape[-1:]
-        return out[0].reshape(out_shape), out[1].reshape(out_shape)
+        x,y =  out[0].reshape(out_shape), out[1].reshape(out_shape)
+        if dim == 2:
+            return np.moveaxis(x,(-2,-1),axes),np.moveaxis(y,(-2,-1),axes)
+        else:
+            return np.swapaxes(x,-1,axis),np.swapaxes(y,-1,axis)
         
     else:
         out_shape = original_shape[:-1] + out.shape[-1:]
-        return out.reshape(out_shape)   
+        z = out.reshape(out_shape)  
+        if dim == 2:
+            return np.moveaxis(z,(-2,-1),axes)
+        else:
+            return np.swapaxes(z,-1,axis)      
+
+
 
 
 
