@@ -294,12 +294,14 @@ def prepare_input_2d(a,axes = (-2,-1),s = None,norm = None):
     return np.moveaxis(a,(first,last), (-2,-1))
 
 
-def unpack(a, inplace = False):
+def unpack(a, axis = -1, inplace = False):
     """Unpack vDSP rfft data format of shape (...,n/2) into regular
     numpy-like rfft of shape (...,n/2 + 1).
     
     Optionally, this can be done inplace without calculating the last element.
     """
+    a = np.swapaxes(np.asarray(a),axis,-1)
+    
     if inplace == False:
         out = np.empty(a.shape[:-1] + (a.shape[-1]+1,), dtype = a.dtype)
     else:
@@ -309,14 +311,16 @@ def unpack(a, inplace = False):
         out[...,1:-1] = a[...,1:]
     out[...,0] = a[...,0].real
     
-    return out
+    return np.swapaxes(out,-1,axis)
     
-def unpack2(a, inplace = False):
+def unpack2(a, axes = (-2,-1),inplace = False):
     """Unpack vDSP rfft2 data format of shape (..., n, n/2) into regular
     numpy-like rfft2 of shape (..., n, n/2 + 1).
     
     Optionally, this can be done inplace without calculating the last column.
     """
+    a = np.moveaxis(np.asarray(a),axes,(-2,-1))
+    
     n0,n1 = a.shape[-2:] #number of rows
     n0_half = n0//2
 
@@ -348,7 +352,7 @@ def unpack2(a, inplace = False):
         #unpack rest of the data
         out[...,:,1:n1] = a[...,:,1:]
         
-    return out
+    return np.moveaxis(out,(-2,-1),axes)
 
 def create_fftsetup(logn, double = True):
     """Creates and returns a fftsetup of a given logsize and precision.

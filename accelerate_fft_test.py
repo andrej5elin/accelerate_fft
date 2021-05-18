@@ -43,6 +43,14 @@ class TestResults(BaseTest):
         self.assert_equal(fft.unpack(fft.rfft(a))/2., np.fft.rfft(a))
         self.assert_equal(fft.unpack(fft.rfft(b))/2., np.fft.rfft(b))
 
+    def test_rfft_float_axis(self):
+        a = np.array(np.random.randn(2,4,8),"float32")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.unpack(fft.rfft(a,axis = 0), axis = 0)/2., np.fft.rfft(a, axis = 0))
+        self.assert_equal(fft.unpack(fft.rfft(b,axis = 0),axis = 0)/2., np.fft.rfft(b,axis = 0))
+        self.assert_equal(fft.unpack(fft.rfft(a,axis = 1), axis = 1)/2., np.fft.rfft(a, axis = 1))
+        self.assert_equal(fft.unpack(fft.rfft(b,axis = 1),axis = 1)/2., np.fft.rfft(b,axis = 1))
+        
     def test_rfft_split_out_float(self):
         a = np.array(np.random.randn(2,4,8),"float32")
         b = a.reshape(2,8,4)
@@ -56,7 +64,15 @@ class TestResults(BaseTest):
         b = a.reshape(2,8,4)
         self.assert_equal(fft.unpack(fft.rfft(a))/2., np.fft.rfft(a))
         self.assert_equal(fft.unpack(fft.rfft(b))/2., np.fft.rfft(b))
-        
+ 
+    def test_rfft_double_axis(self):
+        a = np.array(np.random.randn(2,4,8),"float64")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.unpack(fft.rfft(a,axis = 0), axis = 0)/2., np.fft.rfft(a, axis = 0))
+        self.assert_equal(fft.unpack(fft.rfft(b,axis = 0),axis = 0)/2., np.fft.rfft(b,axis = 0))
+        self.assert_equal(fft.unpack(fft.rfft(a,axis = 1), axis = 1)/2., np.fft.rfft(a, axis = 1))
+        self.assert_equal(fft.unpack(fft.rfft(b,axis = 1),axis = 1)/2., np.fft.rfft(b,axis = 1))
+ 
     def test_rfft_split_out_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
         b = a.reshape(2,8,4)
@@ -71,29 +87,64 @@ class TestResults(BaseTest):
         self.assert_equal(fft.fft(a), np.fft.fft(a))
         self.assert_equal(fft.fft(b), np.fft.fft(b))
         
+    def test_fft_float_axis(self):
+        a = np.array(np.random.randn(2,4,8),"float32")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.fft(a, axis = 0), np.fft.fft(a,axis = 0))
+        self.assert_equal(fft.fft(b,axis = 0), np.fft.fft(b, axis = 0))
+        self.assert_equal(fft.fft(a, axis = 1), np.fft.fft(a,axis = 1))
+        self.assert_equal(fft.fft(b,axis = 1), np.fft.fft(b, axis = 1))
+        
     def test_fft_double(self):
         a = np.array(np.random.randn(2,4,8),"complex128")
         b = a.reshape(2,8,4) 
         self.assert_equal(fft.fft(a), np.fft.fft(a))
         self.assert_equal(fft.fft(b), np.fft.fft(b))
-    
+
+    def test_fft_double_axis(self):
+        a = np.array(np.random.randn(2,4,8),"complex64")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.fft(a, axis = 0), np.fft.fft(a,axis = 0))
+        self.assert_equal(fft.fft(b,axis = 0), np.fft.fft(b, axis = 0))
+        self.assert_equal(fft.fft(a, axis = 1), np.fft.fft(a,axis = 1))
+        self.assert_equal(fft.fft(b,axis = 1), np.fft.fft(b, axis = 1))
+        
     def test_fft2_float(self):
         a = np.array(np.random.randn(2,4,8),"complex64")
         b = a.reshape(2,8,4) 
         self.assert_equal(fft.fft2(a), np.fft.fft2(a))
         self.assert_equal(fft.fft2(b), np.fft.fft2(b))
         
+    def test_fft2_float_axes(self):
+        a = np.array(np.random.randn(2,4,8),"complex64")
+        b = a.reshape(2,8,4) 
+        self.assert_equal(fft.fft2(a,axes = (0,1)), np.fft.fft2(a,axes = (0,1)))
+        self.assert_equal(fft.fft2(b,axes = (0,1)), np.fft.fft2(b,axes = (0,1)))
+            
     def test_fft2_double(self):
         a = np.array(np.random.randn(2,4,8),"complex128")
         b = a.reshape(2,8,4)
         self.assert_equal(fft.fft2(a), np.fft.fft2(a))
         self.assert_equal(fft.fft2(b), np.fft.fft2(b))
         
+    def test_fft2_double_axes(self):
+        a = np.array(np.random.randn(2,4,8),"complex128")
+        b = a.reshape(2,8,4) 
+        self.assert_equal(fft.fft2(a,axes = (0,1)), np.fft.fft2(a,axes = (0,1)))
+        self.assert_equal(fft.fft2(b,axes = (0,1)), np.fft.fft2(b,axes = (0,1)))
+            
     def test_rfft2_float(self):
         a = np.array(np.random.randn(2,4,8),"float32")
         b = a.reshape(2,8,4)
-        self.assert_equal(fft.fft2(a), np.fft.fft2(a))
-        self.assert_equal(fft.fft2(b), np.fft.fft2(b))
+        self.assert_equal(fft.unpack2(fft.rfft2(a))/2, np.fft.rfft2(a))
+        self.assert_equal(fft.unpack2(fft.rfft2(b))/2, np.fft.rfft2(b))
+
+    def test_rfft2_float_axes(self):
+        a = np.array(np.random.randn(2,4,8),"float32")
+        b = a.reshape(2,8,4)
+        self.assert_equal(fft.unpack2(fft.rfft2(a, axes = (0,1)),axes = (0,1))/2, np.fft.rfft2(a,axes = (0,1)))
+        self.assert_equal(fft.unpack2(fft.rfft2(b,axes = (0,1)),axes = (0,1))/2, np.fft.rfft2(b, axes = (0,1)))
+        
         
     def test_rfft2_double(self):
         a = np.array(np.random.randn(2,4,8),"float64")
