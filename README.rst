@@ -123,6 +123,12 @@ was much slower to compute.
 Release notes
 -------------
 
+Version 0.2.1
++++++++++++++
+
+A bugfix release. Makes 1D transform work on 2D data
+
+
 Version 0.2.0
 +++++++++++++
 
