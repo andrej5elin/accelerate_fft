@@ -12,7 +12,7 @@ accelerate_fft
     :target: https://codecov.io/gh/andrej5elin/accelerate_fft
 
 
-CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of 1D ffts (real and complex) and 2D ffts (real and complex). In the current version, the transform is performed over the last (1d fft) axis or the last two (2d fft) axes. Therefore, if a different axis or axes are requested, or if input data is not c-contiguous, a full copy of input data is made.
+CFFI-based wrapper of Apple's Accelerate (vDSP) FFT routines. It implements multiple-signal version of 1D ffts (real and complex) and 2D ffts (real and complex). 
 
 Note that vDSP's FFT only work for input data of length that is a power of 2, e.g. ... 256, 512, 1024 ... 
 
