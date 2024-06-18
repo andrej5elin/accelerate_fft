@@ -16,8 +16,9 @@ jobs:
 
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest-cov accelerate_fft
+          python -m pip install pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install
       - name: Run tests and collect coverage
         run: pytest --cov accelerate_fft ${{ env.CODECOV_ATS_TESTS }}
       - name: Upload coverage to Codecov
