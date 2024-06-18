@@ -16,7 +16,7 @@ must have a size that is a multiple of nthread  * nfft, where
 nthread is number of threads used, and nfft is the size of the fft. 
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from _accelerate_fft_cffi import ffi, lib
 import numpy as np
@@ -534,7 +534,7 @@ def _optimal_flattened_shape(original_shape, dim = 1):
             # we need to reduce the shape
             newshape = reduce((lambda x,y: x*y), original_shape[:-1])
             n = _optimal_workers(newshape,nthreads)
-            return (n,newshape//n) + original_shape[:-1]
+            return (n,newshape//n) + original_shape[-1:]
         else:
             return (1,) + original_shape
     else:
